@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import bgImage from "../assets/murgi.png";
 import vmsLogo from "../assets/vmsLogo.png";
+import setupDummyUsers from "../api/setupDummyUsers";
 
 const LoginPage = () => {
   const [email, setEmail] = useState("");
@@ -9,18 +10,28 @@ const LoginPage = () => {
   const [rememberMe, setRememberMe] = useState(false);
   const navigate = useNavigate();
 
+  useEffect(() => {
+  setupDummyUsers();
+}, []);
+
   const handleLogin = (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    const registeredUser = JSON.parse(localStorage.getItem("user"));
+  const allUsers = JSON.parse(localStorage.getItem("users")) || [];
 
-    if (registeredUser && registeredUser.email === email && registeredUser.password === password) {
-      localStorage.setItem("isAuthenticated", "true");
-      navigate("/dashboard");
-    } else {
-      alert("Invalid credentials. Try again.");
-    }
-  };
+  const registeredUser = allUsers.find(
+    (u) => u.email === email && u.password === password
+  );
+
+  if (registeredUser) {
+    localStorage.setItem("isAuthenticated", "true");
+    localStorage.setItem("loggedInUser", JSON.stringify(registeredUser));
+    navigate("/dashboard");
+  } else {
+    alert("Invalid credentials. Try again.");
+  }
+};
+
 
   return (
     <div
@@ -89,13 +100,13 @@ const LoginPage = () => {
           >
             Login
           </button>
-
-          <p className="text-sm mt-4 text-center">
+          {/*<p className="text-sm mt-4 text-center">
             Don’t have an account?{" "}
             <Link to="/register" className="text-red-600 hover:underline">
               Register
             </Link>
-          </p>
+          </p> */}
+          
         </form>
       </div>
     </div>
