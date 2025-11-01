@@ -4,23 +4,30 @@ import ProtectedRoute from './components/ProtectedRoute';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import Dashboard from './pages/Dashboard';
-import { createBrowserRouter, Navigate, Route, Router, RouterProvider, Routes } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import Home from './pages/Outlet/Home';
+import MakeAppointment from './pages/Outlet/MakeAppointment';
 
-const router = createBrowserRouter([
-  { path: "/", element: <LoginPage /> },
-  { path: "/register", element: <RegisterPage /> },
-  {
-    path: "/dashboard",
-    element: (
-      <ProtectedRoute>
-        <Dashboard />
-      </ProtectedRoute>
-    ),
-  },
-]);
+
 
 function App() {
-  return <RouterProvider router={router} />;
+  return (
+    <Router>
+      <Routes>
+        {/* Public routes */}
+        {/*  <Route path="/" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+ */}
+       
+        {/* Protected - inside Dashboard layout */}
+        <Route path="/" element={<Dashboard />}>
+          <Route path="" element={<Home />} />
+          <Route path="dashboard/makeappointment" element={<MakeAppointment />} />
+          
+        </Route>
+      </Routes>
+    </Router>
+  );
 }
 
 export default App;

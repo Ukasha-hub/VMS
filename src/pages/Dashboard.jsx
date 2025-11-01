@@ -1,21 +1,21 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, Outlet } from "react-router-dom";
-import { FaBell, FaUserCircle } from "react-icons/fa";
+import { FaBell, FaUserCircle, FaBars  } from "react-icons/fa";
 import vmsLogo from "../assets/vmsLogo.png";
+import { Link } from "react-router-dom";
+import {   useLocation } from "react-router-dom";
+import { RxHamburgerMenu } from "react-icons/rx";
+import dashboardIcon from "../assets/dashboard.png";
+import MakeAppointment from "../assets/MakeAppointment.png";
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [user, setUser] = useState(null);
   const [notifications, setNotifications] = useState(3); 
+  const [sidebarOpen, setSidebarOpen] = useState(false); 
 
-  useEffect(() => {
-    const loggedInUser = JSON.parse(localStorage.getItem("loggedInUser"));
-    if (!loggedInUser) {
-      navigate("/"); // Redirect if not logged in
-    } else {
-      setUser(loggedInUser);
-    }
-  }, [navigate]);
+  
 
   const handleLogout = () => {
     localStorage.removeItem("isAuthenticated");
@@ -25,32 +25,35 @@ const Dashboard = () => {
 
   // Sidebar menus by user category
   const menusByCategory = {
-    admin: [
-      { name: "Home", path: "/dashboard/home" },
-      { name: "Users", path: "/dashboard/users" },
-      { name: "Settings", path: "/dashboard/settings" },
-      { name: "Reports", path: "/dashboard/reports" },
-    ],
+   
     employee: [
-      { name: "Home", path: "/dashboard/home" },
-      { name: "Appointment Approval", path: "/dashboard/projects" },
-      { name: "Visit History", path: "/dashboard/tasks" },
+      { name: "Home", path: "", icon:dashboardIcon},
+
+      { name: "Make Appointment", path: "dashboard/makeappointment", icon:MakeAppointment },
+     // { name: "Visit History", path: "/dashboard/tasks" },
     ],
-    security: [
-      { name: "Home", path: "/dashboard/home" },
-      { name: "Visitors", path: "/dashboard/visitors" },
-      { name: "Logs", path: "/dashboard/logs" },
-    ],
+    
   };
 
   // Get the user's category safely
   const userCategory = user?.category?.toLowerCase?.() || "employee";
   const menus = menusByCategory[userCategory] || menusByCategory.employee;
+   // ✅ Convert current path to readable page name
+   const routeTitleMap = {
+    "/dashboard/home": "Home",
+    "/dashboard/makeappointment": "Make Appointment",
+  };
+
+  const pageTitle = routeTitleMap[location.pathname] || "Dashboard";
 
   return (
     <div className="flex h-screen">
       {/* Sidebar */}
-      <aside className="w-64 bg-red-600 text-white fixed top-0 left-0 h-full flex flex-col">
+      <aside
+        className={`bg-red-600 text-white fixed top-0 left-0 h-full w-64 flex flex-col transform transition-transform duration-300
+        ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
+        md:translate-x-0`}     // visible on desktop
+      >
         <div className="pt-2 border-b-2 border-red-400 pb-1 pl-4 flex flex-row gap-2 items-center">
           <img src={vmsLogo} alt="VMS Logo" className="h-12 w-auto" />
           <div className="flex flex-col leading-tight">
@@ -61,15 +64,18 @@ const Dashboard = () => {
 
         {/* Menu items */}
         <nav className="flex-1 p-2 mt-2 space-y-2">
-          {menus.map((menu) => (
-            <a
-              key={menu.name}
-              href={menu.path}
-              className="block p-2 rounded hover:bg-gray-100 hover:text-red-600 transition"
-            >
-              {menu.name}
-            </a>
-          ))}
+        {menus.map((menu) => (
+  <Link
+    key={menu.name}
+    to={menu.path}
+    className="flex items-center p-2 rounded hover:bg-gray-100 hover:text-red-600 transition"
+  >
+    {menu.icon && (
+      <img src={menu.icon} alt={menu.name} className="h-5 w-5 object-contain mr-2" />
+    )}
+    <span>{menu.name}</span>
+  </Link>
+))}
         </nav>
 
         {/* Logout button */}
@@ -81,45 +87,55 @@ const Dashboard = () => {
         </button>
       </aside>
 
+       {/* ✅ Overlay for mobile when sidebar is open */}
+       {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-40 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+        ></div>
+      )}
+
       {/* Main Content */}
-      <div className="flex-1 flex flex-col ml-64">
+      <div className={`flex-1 flex flex-col transition-all duration-300
+  ${sidebarOpen ? "ml-64" : "ml-0"} md:ml-64`}>
         {/* Header */}
-        <header className="h-16 bg-white border-b-4 border-red-200 flex items-center justify-between px-6 fixed w-[calc(100%-16rem)] z-10">
-          <h1 className="text-xl text-red-500 font-bold capitalize">
-            {userCategory} Dashboard
-          </h1>
+        <header
+  className={`h-16 bg-white border-b-4 border-red-200 flex items-center justify-between px-4 md:px-6 fixed z-20 transition-all duration-300
+  ${sidebarOpen ? "w-[calc(100%-16rem)]" : "w-full"} md:w-[calc(100%-16rem)]`}
+>
+  {/* Hamburger icon visible only on mobile */}
+  <div className="flex items-center gap-2">
+    <RxHamburgerMenu
+      onClick={() => setSidebarOpen(!sidebarOpen)}
+      className="text-red-600 text-2xl md:hidden cursor-pointer"
+    />
+    <h1 className="text-red-500 font-bold capitalize text-xs md:text-xl">
+      {pageTitle}
+    </h1>
+  </div>
 
-          <div className="flex items-center gap-6">
-            {/* Bell icon with number */}
-            <button className="relative bg-yellow-200 p-2 rounded-full hover:bg-gray-200">
-              <FaBell className="h-5 w-5 text-red-600" />
-              {notifications > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-semibold rounded-full px-1.5 py-0.5">
-                  {notifications}
-                </span>
-              )}
-            </button>
+  {/* Right section: notifications & user */}
+  <div className="flex items-center gap-4 md:gap-6">
+    {/* Bell icon */}
+    <button className="relative bg-yellow-200 p-2 rounded-full hover:bg-gray-200">
+      <FaBell className="h-5 w-5 text-red-600" />
+      {notifications > 0 && (
+        <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-semibold rounded-full px-1.5 py-0.5">
+          {notifications}
+        </span>
+      )}
+    </button>
 
-            {/* User info */}
-            {user && (
-              <div className="flex items-center gap-3">
-                {user.photo ? (
-                  <img
-                    src={user.photo}
-                    alt="User"
-                    className="h-10 w-10 rounded-full border-2 border-yellow-200 object-cover"
-                  />
-                ) : (
-                  <FaUserCircle className="h-10 w-10 text-red-600" />
-                )}
-                <div className="text-left">
-                  <p className="text-sm font-semibold text-gray-800">{user.name}</p>
-                  <p className="text-xs text-gray-500">{user.email}</p>
-                </div>
-              </div>
-            )}
-          </div>
-        </header>
+    {/* User info */}
+    <div className="flex items-center gap-2 md:gap-3">
+      <FaUserCircle className="h-8 w-8 md:h-10 md:w-10 text-red-600" />
+      <div className="text-left hidden md:block">
+        <p className="text-sm font-semibold text-gray-800">Mr.ABC</p>
+        <p className="text-xs text-gray-500">abc@gmail.com</p>
+      </div>
+    </div>
+  </div>
+</header>
 
         {/* Page Content */}
         <main className="flex-1 mt-16 p-6 overflow-y-auto bg-yellow-100">
