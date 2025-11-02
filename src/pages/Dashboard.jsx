@@ -30,7 +30,7 @@ const Dashboard = () => {
       { name: "Home", path: "", icon:dashboardIcon},
 
       { name: "Make Appointment", path: "dashboard/makeappointment", icon:MakeAppointment },
-     // { name: "Visit History", path: "/dashboard/tasks" },
+     { name: "Scanned Visitor Info", path: "dashboard/scanqrcode", icon:"" },
     ],
     
   };
@@ -77,6 +77,13 @@ const Dashboard = () => {
   </Link>
 ))}
         </nav>
+
+        <button
+          onClick={handleLogout}
+          className="m-4 p-2 bg-yellow-400 text-red-500 rounded hover:bg-red-200"
+        >
+          Back to ERP
+        </button>
 
         {/* Logout button */}
         <button

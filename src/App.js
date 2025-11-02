@@ -7,6 +7,7 @@ import Dashboard from './pages/Dashboard';
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import Home from './pages/Outlet/Home';
 import MakeAppointment from './pages/Outlet/MakeAppointment';
+import ScanQRCode from './pages/Outlet/ScanQRCode';
 
 
 
@@ -23,6 +24,7 @@ function App() {
         <Route path="/" element={<Dashboard />}>
           <Route path="" element={<Home />} />
           <Route path="dashboard/makeappointment" element={<MakeAppointment />} />
+          <Route path="dashboard/scanqrcode" element={<ScanQRCode />} />
           
         </Route>
       </Routes>
