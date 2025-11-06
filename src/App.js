@@ -8,6 +8,8 @@ import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import Home from './pages/Outlet/Home';
 import MakeAppointment from './pages/Outlet/MakeAppointment';
 import ScanQRCode from './pages/Outlet/ScanQRCode';
+import VerifyVisitor from './pages/Outlet/VerifyVisitor';
+
 
 
 
@@ -16,15 +18,20 @@ function App() {
     <Router>
       <Routes>
         {/* Public routes */}
-        {/*  <Route path="/" element={<LoginPage />} />
+          <Route path="/" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
- */}
+ 
        
         {/* Protected - inside Dashboard layout */}
-        <Route path="/" element={<Dashboard />}>
-          <Route path="" element={<Home />} />
-          <Route path="dashboard/makeappointment" element={<MakeAppointment />} />
-          <Route path="dashboard/scanqrcode" element={<ScanQRCode />} />
+        <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>}>
+          <Route path="" element={<ProtectedRoute><Home /></ProtectedRoute>} />
+          <Route path="dashboard/makeappointment" element={<ProtectedRoute><MakeAppointment /></ProtectedRoute>} />
+          <Route path="dashboard/scanqrcode" element={<ProtectedRoute><ScanQRCode /></ProtectedRoute>} />
+          <Route path="dashboard/verify/:id"
+  element={<ProtectedRoute><VerifyVisitor /></ProtectedRoute>}
+/>
+          
+          
           
         </Route>
       </Routes>

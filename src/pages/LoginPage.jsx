@@ -1,57 +1,59 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import axios from "axios";
 import bgImage from "../assets/murgi.png";
 import vmsLogo from "../assets/vmsLogo.png";
-import setupDummyUsers from "../api/setupDummyUsers";
 
 const LoginPage = () => {
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   const navigate = useNavigate();
 
-  useEffect(() => {
-  setupDummyUsers();
-}, []);
+  const handleLogin = async (e) => {
+    e.preventDefault();
 
-  const handleLogin = (e) => {
-  e.preventDefault();
+    try {
+      const res = await axios.post(
+        "/api/v1/auth/auth/guard_login",
+        {
+          username,
+          password,
+        }
+      );
 
-  const allUsers = JSON.parse(localStorage.getItem("users")) || [];
+      // If login is successful
+      const { access_token, guard_name, designation } = res.data;
 
-  const registeredUser = allUsers.find(
-    (u) => u.email === email && u.password === password
-  );
+      localStorage.setItem("isAuthenticated", "true");
+      localStorage.setItem("access_token", access_token);
+      localStorage.setItem(
+        "loggedInUser",
+        JSON.stringify({ guard_name, designation, username })
+      );
 
-  if (registeredUser) {
-    localStorage.setItem("isAuthenticated", "true");
-    localStorage.setItem("loggedInUser", JSON.stringify(registeredUser));
-    navigate("/dashboard");
-  } else {
-    alert("Invalid credentials. Try again.");
-  }
-};
-
+      navigate("/dashboard"); // Redirect to dashboard
+    } catch (err) {
+      console.error("Login API Error →", err);
+      alert("Invalid credentials. Please try again.");
+    }
+  };
 
   return (
     <div
       className="relative flex justify-center items-center h-screen bg-cover bg-center"
       style={{ backgroundImage: `url(${bgImage})` }}
     >
-      {/* Red transparent overlay */}
       <div className="absolute inset-0 bg-red-600/40"></div>
 
-      {/* Logo at top-left */}
       <div className="absolute top-4 left-4 flex flex-row gap-2">
         <img src={vmsLogo} alt="VMS Logo" className="h-12 w-auto" />
         <div className="flex flex-col">
-        <p className="text-white font-bold ">Kazi Farms</p>
-        <p className="text-white font-bold "> VMS</p>
+          <p className="text-white font-bold">Kazi Farms</p>
+          <p className="text-white font-bold">VMS</p>
         </div>
-       
       </div>
 
-      {/* Login card */}
       <div className="relative bg-white p-8 rounded-2xl shadow-lg w-96 backdrop-blur-sm z-10">
         <form onSubmit={handleLogin}>
           <h2 className="text-4xl font-bold text-red-500 mb-6 text-center">Welcome</h2>
@@ -60,11 +62,11 @@ const LoginPage = () => {
           </p>
 
           <input
-            type="email"
-            placeholder="Email"
+            type="text"
+            placeholder="Username"
             className="w-full border p-2 rounded mb-4"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
             required
           />
 
@@ -77,7 +79,6 @@ const LoginPage = () => {
             required
           />
 
-          {/* Remember Me + Forgot Password */}
           <div className="flex flex-row justify-between items-center mb-4">
             <label className="flex items-center space-x-2 text-sm text-gray-700">
               <input
@@ -100,13 +101,6 @@ const LoginPage = () => {
           >
             Login
           </button>
-          {/*<p className="text-sm mt-4 text-center">
-            Don’t have an account?{" "}
-            <Link to="/register" className="text-red-600 hover:underline">
-              Register
-            </Link>
-          </p> */}
-          
         </form>
       </div>
     </div>

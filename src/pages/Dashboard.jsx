@@ -31,6 +31,7 @@ const Dashboard = () => {
 
       { name: "Make Appointment", path: "dashboard/makeappointment", icon:MakeAppointment },
      { name: "Scanned Visitor Info", path: "dashboard/scanqrcode", icon:"" },
+     { name: "Verify Visitor", path: "dashboard/verify/:id", icon:"" },
     ],
     
   };

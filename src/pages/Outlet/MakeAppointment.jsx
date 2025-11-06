@@ -1,119 +1,207 @@
-import React from "react";
+import React, { useState } from "react";
+import axios from "axios";
 
 const MakeAppointment = () => {
+  const [empName, setEmpName] = useState("");
+  const [empOrganization, setEmpOrganization] = useState("");
+  const [empId, setEmpId] = useState("");
+  const [empDepartment, setEmpDepartment] = useState("");
+
+  const [visitorName, setVisitorName] = useState("");
+  const [visitorPhone, setVisitorPhone] = useState("");
+  const [visitorEmail, setVisitorEmail] = useState("");
+  const [visitorOrganization, setVisitorOrganization] = useState("");
+  const [visitorDesignation, setVisitorDesignation] = useState("");
+
+  const [visitingDate, setVisitingDate] = useState("");
+  const [visitingTime, setVisitingTime] = useState("");
+  const [visitingPurpose, setVisitingPurpose] = useState("");
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const payload = {
+      emp_name: empName,
+      emp_organization: empOrganization,
+      emp_id: empId,
+      emp_department: empDepartment,
+      visitor_name: visitorName,
+      visitor_phone: visitorPhone,
+      visitor_email: visitorEmail,
+      visitor_organization: visitorOrganization,
+      visitor_designation: visitorDesignation,
+      appointment_date: visitingDate,
+      appointment_time: visitingTime,
+      status: "Pending", // optional default
+      qr_code_path: "string", // optional placeholder
+      created_by: "", // optional
+    };
+
+    try {
+      const token = localStorage.getItem("access_token"); // get token from login
+    
+      const res = await axios.post(
+        "/api/v1/appointments/appointments/",
+        payload,
+        {
+          headers: {
+            Authorization: `Bearer ${token}` // send token in header
+          }
+        }
+      );
+    
+      alert("Appointment created successfully!");
+      console.log("API Response →", res.data);
+    } catch (err) {
+      console.error("API POST Error →", err);
+      alert("Failed to create appointment");
+    }
+  };
+
   return (
     <div className="flex justify-center">
-    {/* Form Container */}
-    <div className="bg-white/70 backdrop-blur-lg shadow-lg p-8 rounded-xl w-full max-w-5xl">
-      {/* Employee Info */}
-      <h2 className="text-lg font-bold text-red-600 mb-4">Employee Info</h2>
-      <form className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block font-semibold mb-1">Employee Name</label>
-            <input
-              type="text"
-              placeholder="Enter employee name"
-              className="w-full p-[16px] border rounded focus:outline-red-500"
-            />
+      <div className="bg-white/70 backdrop-blur-lg shadow-lg p-8 rounded-xl w-full max-w-5xl">
+        <h2 className="text-lg font-bold text-red-600 mb-4">Employee Info</h2>
+        <form className="space-y-6" onSubmit={handleSubmit}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block font-semibold mb-1">Employee Name</label>
+              <input
+                type="text"
+                value={empName}
+                onChange={(e) => setEmpName(e.target.value)}
+                className="w-full p-2 border rounded focus:outline-red-500"
+                required
+              />
+            </div>
+            <div>
+              <label className="block font-semibold mb-1">Organization</label>
+              <input
+                type="text"
+                value={empOrganization}
+                onChange={(e) => setEmpOrganization(e.target.value)}
+                className="w-full p-2 border rounded focus:outline-red-500"
+                required
+              />
+            </div>
+            <div>
+              <label className="block font-semibold mb-1">Employee ID</label>
+              <input
+                type="text"
+                value={empId}
+                onChange={(e) => setEmpId(e.target.value)}
+                className="w-full p-2 border rounded focus:outline-red-500"
+              />
+            </div>
+            <div>
+              <label className="block font-semibold mb-1">Department</label>
+              <input
+                type="text"
+                value={empDepartment}
+                onChange={(e) => setEmpDepartment(e.target.value)}
+                className="w-full p-2 border rounded focus:outline-red-500"
+              />
+            </div>
           </div>
-          <div>
-            <label className="block font-semibold mb-1">Select Organization</label>
-            <select className="w-full p-[16px] border rounded focus:outline-red-500">
-              <option value="">Select Organization</option>
-              <option value="kazi">Kazi Farms</option>
-              <option value="kf">KF Biotech</option>
-            </select>
-          </div>
-          <div>
-            <label className="block font-semibold mb-1">Employee ID</label>
-            <input
-              type="text"
-              placeholder="Enter employee ID"
-              className="w-full p-2 border rounded focus:outline-red-500"
-            />
-          </div>
-          <div>
-            <label className="block font-semibold mb-1">Select Department</label>
-            <select className="w-full p-2 border rounded focus:outline-red-500">
-              <option value="">Select Department</option>
-              <option value="hr">HR</option>
-              <option value="it">IT</option>
-              <option value="finance">Finance</option>
-            </select>
-          </div>
-          
-        </div>
 
-        {/* Partition */}
-        <div className="my-6 border-t-2 border-red-300"></div>
+          <div className="my-6 border-t-2 border-red-300"></div>
 
-        {/* Visitor Info */}
-        <h2 className="text-lg font-bold text-red-600 mb-4">Visitor Info</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-            <label className="block font-semibold mb-1">Visiting Date</label>
-            <input
-              type="date"
-              className="w-full p-2 border rounded focus:outline-red-500"
-            />
-          </div>
+          <h2 className="text-lg font-bold text-red-600 mb-4">Visitor Info</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block font-semibold mb-1">Visiting Time</label>
-            <input
-              type="time"
-              className="w-full p-2 border rounded focus:outline-red-500"
-            />
+              <label className="block font-semibold mb-1">Visiting Date</label>
+              <input
+                type="date"
+                value={visitingDate}
+                onChange={(e) => setVisitingDate(e.target.value)}
+                className="w-full p-2 border rounded focus:outline-red-500"
+                required
+              />
+            </div>
+            <div>
+              <label className="block font-semibold mb-1">Visiting Time</label>
+              <input
+                type="time"
+                value={visitingTime}
+                onChange={(e) => setVisitingTime(e.target.value)}
+                className="w-full p-2 border rounded focus:outline-red-500"
+                required
+              />
+            </div>
+            <div>
+              <label className="block font-semibold mb-1">Visitor Name</label>
+              <input
+                type="text"
+                value={visitorName}
+                onChange={(e) => setVisitorName(e.target.value)}
+                className="w-full p-2 border rounded focus:outline-red-500"
+                required
+              />
+            </div>
+            <div>
+              <label className="block font-semibold mb-1">Phone No.</label>
+              <input
+                type="tel"
+                value={visitorPhone}
+                onChange={(e) => setVisitorPhone(e.target.value)}
+                className="w-full p-2 border rounded focus:outline-red-500"
+                required
+              />
+            </div>
+            <div>
+              <label className="block font-semibold mb-1">Email</label>
+              <input
+                type="email"
+                value={visitorEmail}
+                onChange={(e) => setVisitorEmail(e.target.value)}
+                className="w-full p-2 border rounded focus:outline-red-500"
+                required
+              />
+            </div>
+            <div>
+              <label className="block font-semibold mb-1">Visitor Organization</label>
+              <input
+                type="text"
+                value={visitorOrganization}
+                onChange={(e) => setVisitorOrganization(e.target.value)}
+                className="w-full p-2 border rounded focus:outline-red-500"
+             
+              />
+            </div>
+            <div>
+              <label className="block font-semibold mb-1">Visitor Designation</label>
+              <input
+                type="text"
+                value={visitorDesignation}
+                onChange={(e) => setVisitorDesignation(e.target.value)}
+                className="w-full p-2 border rounded focus:outline-red-500"
+                
+              />
+            </div>
+           
+            <div className="col-span-2">
+              <label className="block font-semibold mb-1">Visiting Purpose</label>
+              <textarea
+                value={visitingPurpose}
+                onChange={(e) => setVisitingPurpose(e.target.value)}
+                placeholder="Enter purpose of visit"
+                className="w-full p-2 border rounded focus:outline-red-500"
+                rows={4}
+              ></textarea>
+            </div>
           </div>
-          <div>
-            <label className="block font-semibold mb-1">Visiting Person</label>
-            <input
-              type="text"
-              placeholder="Visitor name"
-              className="w-full p-2 border rounded focus:outline-red-500"
-            />
-          </div>
-          <div>
-            <label className="block font-semibold mb-1">Phone No.</label>
-            <input
-              type="tel"
-              placeholder=""
-              className="w-full p-2 border rounded focus:outline-red-500"
-            />
-          </div>
-          <div>
-            <label className="block font-semibold mb-1">Email</label>
-            <input
-              type="email"
-              placeholder=""
-              className="w-full p-2 border rounded focus:outline-red-500"
-            />
-          </div>
-         
-          
-        </div>
 
-        <div>
-  <label className="block font-semibold mb-1">Visiting Purpose</label>
-  <textarea
-    placeholder="Enter purpose of visit"
-    className="w-full p-2 border rounded focus:outline-red-500"
-    rows={4} // adjust height
-  ></textarea>
-</div>
 
-        {/* Button */}
-        <div className="flex justify-center">
-          <button
-            type="submit"
-            className="bg-red-600 hover:bg-red-700 text-white font-semibold px-6 py-2 rounded-lg transition"
-          >
-            Send Request
-          </button>
-        </div>
-      </form>
+          <div className="flex justify-center mt-4">
+            <button
+              type="submit"
+              className="bg-red-600 hover:bg-red-700 text-white font-semibold px-6 py-2 rounded-lg transition"
+            >
+              Submit Appointment
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
-  </div>
   );
 };
 
