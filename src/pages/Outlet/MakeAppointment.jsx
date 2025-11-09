@@ -1,8 +1,11 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import axios from "axios";
+import { useLocation } from "react-router-dom";
 
 const MakeAppointment = () => {
   const [empName, setEmpName] = useState("");
+  const [empDesignation, setEmpDesignation] = useState("");
+  const [empEmail, setEmpEmail] = useState("");
   const [empOrganization, setEmpOrganization] = useState("");
   const [empId, setEmpId] = useState("");
   const [empDepartment, setEmpDepartment] = useState("");
@@ -17,12 +20,19 @@ const MakeAppointment = () => {
   const [visitingTime, setVisitingTime] = useState("");
   const [visitingPurpose, setVisitingPurpose] = useState("");
 
+  const [user, setUser] = useState(null);
+  const location = useLocation();
+
+  
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     const payload = {
       emp_name: empName,
       emp_organization: empOrganization,
+      emp_designation: empDesignation,
       emp_id: empId,
+      emp_email:empEmail,
       emp_department: empDepartment,
       visitor_name: visitorName,
       visitor_phone: visitorPhone,
@@ -35,17 +45,19 @@ const MakeAppointment = () => {
       qr_code_path: "string", // optional placeholder
       created_by: "", // optional
     };
-
+    
     try {
       const token = localStorage.getItem("access_token"); // get token from login
-    
+      
       const res = await axios.post(
-        "/api/v1/appointments/appointments/",
+        "http://172.16.9.98:8000/api/v1/appointments/appointments/",
         payload,
         {
           headers: {
-            Authorization: `Bearer ${token}` // send token in header
-          }
+            Authorization: `Bearer ${token}`, // send token in header
+          
+          },
+         
         }
       );
     
@@ -56,6 +68,77 @@ const MakeAppointment = () => {
       alert("Failed to create appointment");
     }
   };
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const jsonParam = params.get("json");
+  
+    if (jsonParam) {
+      try {
+        // Fix spaces and decode
+        let decoded = decodeURIComponent(jsonParam.replace(/\+/g, " "));
+  
+        // Auto-fix missing closing quotes or braces
+        if (decoded.endsWith('"') === false && !decoded.endsWith('"}')) {
+          decoded = decoded + '"}';
+        }
+        if (!decoded.endsWith("}")) {
+          decoded += "}";
+        }
+  
+        // Try parsing
+        let data;
+        try {
+          data = JSON.parse(decoded);
+        } catch {
+          // Last attempt: remove last bad character
+          data = JSON.parse(decoded.slice(0, decoded.lastIndexOf("}") + 1));
+        }
+  
+        console.log("Extracted JSON →", data);
+  
+        // Set form state
+        setEmpName(data.empName || "");
+        setEmpDesignation(data.empDesig || "");
+        setEmpEmail(data.empEmail || "");
+        setEmpOrganization(data.empOrg || "");
+        setEmpId(data.empID || "");
+        setEmpDepartment(data.empDept || "");
+  
+        // Save in localStorage
+        const storedUser = {
+          guard_name: data.empName || "",
+          designation: data.empDesig || "",
+          department: data.empDept || "",
+          organization: data.empOrg || "",
+          emp_id: data.empID || "",
+          email: data.empEmail || "",
+        };
+        localStorage.setItem("loggedInUser", JSON.stringify(storedUser));
+        setUser(storedUser);
+        localStorage.setItem("isAuthenticated", "true"); // optional
+  
+      } catch (err) {
+        console.error("❌ JSON extraction failed →", err);
+      }
+    } else {
+      // No URL param: load from localStorage
+      const storedUser = localStorage.getItem("loggedInUser");
+      if (storedUser) {
+        const parsedUser = JSON.parse(storedUser);
+        setUser(parsedUser);
+  
+        // Also prefill form
+        setEmpName(parsedUser.guard_name || "");
+        setEmpDesignation(parsedUser.designation || "");
+        setEmpEmail(parsedUser.email || "");
+        setEmpOrganization(parsedUser.organization || "");
+        setEmpId(parsedUser.emp_id || "");
+        setEmpDepartment(parsedUser.department || "");
+      }
+    }
+  }, [location.search]);
+  
 
   return (
     <div className="flex justify-center">
@@ -74,11 +157,31 @@ const MakeAppointment = () => {
               />
             </div>
             <div>
+              <label className="block font-semibold mb-1">Designation</label>
+              <input
+                type="text"
+                value={empDesignation}
+                onChange={(e) => setEmpDesignation(e.target.value)}
+                className="w-full p-2 border rounded focus:outline-red-500"
+                required
+              />
+            </div>
+            <div>
               <label className="block font-semibold mb-1">Organization</label>
               <input
                 type="text"
                 value={empOrganization}
                 onChange={(e) => setEmpOrganization(e.target.value)}
+                className="w-full p-2 border rounded focus:outline-red-500"
+                required
+              />
+            </div>
+            <div>
+              <label className="block font-semibold mb-1">Employee Email</label>
+              <input
+                type="text"
+                value={empEmail}
+                onChange={(e) => setEmpEmail(e.target.value)}
                 className="w-full p-2 border rounded focus:outline-red-500"
                 required
               />

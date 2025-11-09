@@ -1,19 +1,21 @@
-import React, { useState } from "react";
-import { FaChevronLeft } from "react-icons/fa";
-import { FaChevronRight } from "react-icons/fa";
-
-// Mock events → Replace with API or state
-const events = [
-  { date: "2025-11-02", title: "John Doe Visit" },
-  { date: "2025-11-02", title: "John Daaa Visit" },
-  { date: "2025-11-02", title: "John Daaa Visit" },
-  { date: "2025-11-02", title: "John Daaa Visit" },
-  { date: "2025-11-05", title: "Michael Brown Meeting" },
-  { date: "2025-11-10", title: "Alice Johnson Visit" },
-];
+import React, { useState, useEffect } from "react";
+import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
+import axios from "axios";
 
 const CalendarView = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [appointments, setAppointments] = useState([]);
+
+  useEffect(() => {
+    const token = localStorage.getItem("access_token");
+
+    axios
+      .get("/api/v1/appointments/appointments/", {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      .then((res) => setAppointments(res.data))
+      .catch((err) => console.error("Error fetching appointments:", err));
+  }, []);
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth(); // 0-indexed
@@ -23,30 +25,19 @@ const CalendarView = () => {
   const daysInMonth = new Date(year, month + 1, 0).getDate();
 
   const days = [];
-  for (let i = 0; i < firstDay; i++) {
-    days.push(null); // empty slots
-  }
-  for (let d = 1; d <= daysInMonth; d++) {
-    days.push(d);
-  }
+  for (let i = 0; i < firstDay; i++) days.push(null);
+  for (let d = 1; d <= daysInMonth; d++) days.push(d);
 
   const getEventsForDate = (day) => {
     if (!day) return [];
     const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(
       day
     ).padStart(2, "0")}`;
-    return events.filter((e) => e.date === dateStr);
+    return appointments.filter((a) => a.appointment_date === dateStr);
   };
 
-  const handlePrevMonth = () => {
-    const prev = new Date(year, month - 1, 1);
-    setCurrentDate(prev);
-  };
-
-  const handleNextMonth = () => {
-    const next = new Date(year, month + 1, 1);
-    setCurrentDate(next);
-  };
+  const handlePrevMonth = () => setCurrentDate(new Date(year, month - 1, 1));
+  const handleNextMonth = () => setCurrentDate(new Date(year, month + 1, 1));
 
   return (
     <div className="p-6">
@@ -82,16 +73,16 @@ const CalendarView = () => {
           return (
             <div
               key={idx}
-              className={`min-h-[80px] border p-1 rounded-lg flex flex-col`}
+              className="min-h-[80px] border p-1 rounded-lg flex flex-col"
             >
               {day && <span className="font-bold">{day}</span>}
-              <div className="flex flex-col gap-1 mt-1">
-                {dayEvents.map((event, i) => (
+              <div className="flex flex-col gap-1 mt-1 text-xs">
+                {dayEvents.map((event) => (
                   <span
-                    key={i}
-                    className="text-xs bg-red-100 text-red-600 rounded px-1"
+                    key={event.id}
+                    className="bg-red-100 text-red-600 rounded px-1"
                   >
-                    {event.title}
+                    {event.emp_name} - {event.visitor_name} ({event.appointment_time})
                   </span>
                 ))}
               </div>

@@ -1,21 +1,49 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate, Outlet } from "react-router-dom";
-import { FaBell, FaUserCircle, FaBars  } from "react-icons/fa";
-import vmsLogo from "../assets/vmsLogo.png";
-import { Link } from "react-router-dom";
-import {   useLocation } from "react-router-dom";
+import { useNavigate, Outlet, useLocation } from "react-router-dom";
+import { FaBell, FaUserCircle } from "react-icons/fa";
 import { RxHamburgerMenu } from "react-icons/rx";
+import vmsLogo from "../assets/vmsLogo.png";
 import dashboardIcon from "../assets/dashboard.png";
 import MakeAppointment from "../assets/MakeAppointment.png";
+import { Link } from "react-router-dom";
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [user, setUser] = useState(null);
-  const [notifications, setNotifications] = useState(3); 
-  const [sidebarOpen, setSidebarOpen] = useState(false); 
+  const [notifications, setNotifications] = useState(3);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  
+  useEffect(() => {
+    // Extract all employee info from URL query if present
+    const queryParams = new URLSearchParams(location.search);
+    const jsonParam = queryParams.get("json");
+
+    if (jsonParam) {
+      try {
+        const parsed = JSON.parse(decodeURIComponent(jsonParam));
+        // Store all relevant fields
+        const storedUser = {
+          guard_name: parsed.empName || "",
+          designation: parsed.empDesig || "",
+          department: parsed.empDept || "",
+          organization: parsed.empOrg || "",
+          username: parsed.empID || "",
+          email: parsed.empEmail || "",
+        };
+        localStorage.setItem("loggedInUser", JSON.stringify(storedUser));
+        setUser(storedUser);
+        // Optional: set isAuthenticated automatically
+        localStorage.setItem("isAuthenticated", "true");
+      } catch (err) {
+        console.error("Failed to parse JSON param:", err);
+      }
+    } else {
+      // Fallback to existing localStorage
+      const storedUser = localStorage.getItem("loggedInUser");
+      if (storedUser) setUser(JSON.parse(storedUser));
+    }
+  }, [location.search]);
 
   const handleLogout = () => {
     localStorage.removeItem("isAuthenticated");
@@ -23,24 +51,21 @@ const Dashboard = () => {
     navigate("/");
   };
 
-  // Sidebar menus by user category
+  // Sidebar menus
   const menusByCategory = {
-   
     employee: [
-      { name: "Home", path: "", icon:dashboardIcon},
-
-      { name: "Make Appointment", path: "dashboard/makeappointment", icon:MakeAppointment },
-     { name: "Scanned Visitor Info", path: "dashboard/scanqrcode", icon:"" },
-     { name: "Verify Visitor", path: "dashboard/verify/:id", icon:"" },
+      { name: "Home", path: "", icon: dashboardIcon },
+      { name: "Make Appointment", path: "makeappointment", icon: MakeAppointment },
+      { name: "Scanned Visitor Info", path: "dashboard/scanqrcode", icon: "" },
+      { name: "Verify Visitor", path: "dashboard/verify/:id", icon: "" },
+      { name: "Visitor History", path: "history", icon: "" },
     ],
-    
   };
 
-  // Get the user's category safely
   const userCategory = user?.category?.toLowerCase?.() || "employee";
   const menus = menusByCategory[userCategory] || menusByCategory.employee;
-   // ✅ Convert current path to readable page name
-   const routeTitleMap = {
+
+  const routeTitleMap = {
     "/dashboard/home": "Home",
     "/dashboard/makeappointment": "Make Appointment",
   };
@@ -52,8 +77,7 @@ const Dashboard = () => {
       {/* Sidebar */}
       <aside
         className={`bg-red-600 text-white fixed top-0 left-0 h-full w-64 flex flex-col transform transition-transform duration-300
-        ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
-        md:translate-x-0`}     // visible on desktop
+        ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0`}
       >
         <div className="pt-2 border-b-2 border-red-400 pb-1 pl-4 flex flex-row gap-2 items-center">
           <img src={vmsLogo} alt="VMS Logo" className="h-12 w-auto" />
@@ -65,26 +89,19 @@ const Dashboard = () => {
 
         {/* Menu items */}
         <nav className="flex-1 p-2 mt-2 space-y-2">
-        {menus.map((menu) => (
-  <Link
-    key={menu.name}
-    to={menu.path}
-    className="flex items-center p-2 rounded hover:bg-gray-100 hover:text-red-600 transition"
-  >
-    {menu.icon && (
-      <img src={menu.icon} alt={menu.name} className="h-5 w-5 object-contain mr-2" />
-    )}
-    <span>{menu.name}</span>
-  </Link>
-))}
+          {menus.map((menu) => (
+            <Link
+              key={menu.name}
+              to={menu.path}
+              className="flex items-center p-2 rounded hover:bg-gray-100 hover:text-red-600 transition"
+            >
+              {menu.icon && (
+                <img src={menu.icon} alt={menu.name} className="h-5 w-5 object-contain mr-2" />
+              )}
+              <span>{menu.name}</span>
+            </Link>
+          ))}
         </nav>
-
-        <button
-          onClick={handleLogout}
-          className="m-4 p-2 bg-yellow-400 text-red-500 rounded hover:bg-red-200"
-        >
-          Back to ERP
-        </button>
 
         {/* Logout button */}
         <button
@@ -95,57 +112,52 @@ const Dashboard = () => {
         </button>
       </aside>
 
-       {/* ✅ Overlay for mobile when sidebar is open */}
-       {sidebarOpen && (
+      {/* Overlay for mobile */}
+      {sidebarOpen && (
         <div
           className="fixed inset-0 bg-black bg-opacity-40 md:hidden"
           onClick={() => setSidebarOpen(false)}
-        ></div>
+        />
       )}
 
-      {/* Main Content */}
-      <div className={`flex-1 flex flex-col transition-all duration-300
-  ${sidebarOpen ? "ml-64" : "ml-0"} md:ml-64`}>
+      {/* Main content */}
+      <div className={`flex-1 flex flex-col transition-all duration-300 ${sidebarOpen ? "ml-64" : "ml-0"} md:ml-64`}>
         {/* Header */}
         <header
-  className={`h-16 bg-white border-b-4 border-red-200 flex items-center justify-between px-4 md:px-6 fixed z-20 transition-all duration-300
-  ${sidebarOpen ? "w-[calc(100%-16rem)]" : "w-full"} md:w-[calc(100%-16rem)]`}
->
-  {/* Hamburger icon visible only on mobile */}
-  <div className="flex items-center gap-2">
-    <RxHamburgerMenu
-      onClick={() => setSidebarOpen(!sidebarOpen)}
-      className="text-red-600 text-2xl md:hidden cursor-pointer"
-    />
-    <h1 className="text-red-500 font-bold capitalize text-xs md:text-xl">
-      {pageTitle}
-    </h1>
-  </div>
+          className={`h-16 bg-white border-b-4 border-red-200 flex items-center justify-between px-4 md:px-6 fixed z-20 transition-all duration-300
+          ${sidebarOpen ? "w-[calc(100%-16rem)]" : "w-full"} md:w-[calc(100%-16rem)]`}
+        >
+          <div className="flex items-center gap-2">
+            <RxHamburgerMenu
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="text-red-600 text-2xl md:hidden cursor-pointer"
+            />
+            <h1 className="text-red-500 font-bold capitalize text-xs md:text-xl">{pageTitle}</h1>
+          </div>
 
-  {/* Right section: notifications & user */}
-  <div className="flex items-center gap-4 md:gap-6">
-    {/* Bell icon */}
-    <button className="relative bg-yellow-200 p-2 rounded-full hover:bg-gray-200">
-      <FaBell className="h-5 w-5 text-red-600" />
-      {notifications > 0 && (
-        <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-semibold rounded-full px-1.5 py-0.5">
-          {notifications}
-        </span>
-      )}
-    </button>
+          {/* Right section */}
+          <div className="flex items-center gap-4 md:gap-6">
+            <button className="relative bg-yellow-200 p-2 rounded-full hover:bg-gray-200">
+              <FaBell className="h-5 w-5 text-red-600" />
+              {notifications > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-semibold rounded-full px-1.5 py-0.5">
+                  {notifications}
+                </span>
+              )}
+            </button>
 
-    {/* User info */}
-    <div className="flex items-center gap-2 md:gap-3">
-      <FaUserCircle className="h-8 w-8 md:h-10 md:w-10 text-red-600" />
-      <div className="text-left hidden md:block">
-        <p className="text-sm font-semibold text-gray-800">Mr.ABC</p>
-        <p className="text-xs text-gray-500">abc@gmail.com</p>
-      </div>
-    </div>
-  </div>
-</header>
+            <div className="flex items-center gap-2 md:gap-3">
+              <FaUserCircle className="h-8 w-8 md:h-10 md:w-10 text-red-600" />
+              <div className="text-left hidden md:block">
+                <p className="text-sm font-semibold text-gray-800">
+                  {user?.guard_name || "Guest"}
+                </p>
+                <p className="text-xs text-gray-500">{user?.designation}</p>
+              </div>
+            </div>
+          </div>
+        </header>
 
-        {/* Page Content */}
         <main className="flex-1 mt-16 p-6 overflow-y-auto bg-yellow-100">
           <Outlet />
         </main>
