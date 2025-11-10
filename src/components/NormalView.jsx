@@ -22,12 +22,13 @@ const Card = ({ visitor, showMeetingWith, showLocation, buttonLabel }) => (
         <img src={calendar} alt="" />
         {visitor.appointment_date}, {visitor.appointment_time}
       </p>
+
       {showLocation && visitor.location && (
         <p className="text-red-600 flex flex-row gap-1 italic">
           <img src={location} alt="" /> {visitor.location}
         </p>
       )}
-      {/* Employee Info */}
+
       {visitor.emp_name && (
         <div className="text-gray-600 italic mt-2">
           <p className="font-semibold">Employee Info:</p>
@@ -37,9 +38,6 @@ const Card = ({ visitor, showMeetingWith, showLocation, buttonLabel }) => (
           {visitor.emp_email && <p>Email: {visitor.emp_email}</p>}
         </div>
       )}
-      {/* QR Code */}
-     
-     
     </div>
   </div>
 );
@@ -49,9 +47,19 @@ const NormalView = () => {
   const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
-    const token = localStorage.getItem("access_token"); // if auth is required
+    const token = localStorage.getItem("access_token");
+
+    // ✅ Check localStorage for logged in user
+    const loggedUser = JSON.parse(localStorage.getItem("loggedInUser"));
+    const empID = loggedUser?.emp_id; // empID stored as 'username'
+
+    // ✅ Choose API based on user login
+    const apiUrl = empID
+      ? `/api/v1/appointments/appointments/employee/${empID}`
+      : `/api/v1/appointments/appointments/`;
+
     axios
-      .get("/api/v1/appointments/appointments/", {
+      .get(apiUrl, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       })
       .then((res) => {
@@ -79,13 +87,7 @@ const NormalView = () => {
         <h2 className="text-xl font-bold text-gray-700 mb-4">Currently Present Guests</h2>
         <div className="flex flex-wrap gap-4">
           {currentlyPresentGuests.map((guest) => (
-            <Card
-              key={guest.id}
-              visitor={guest}
-              showMeetingWith={false}
-              showLocation={true}
-              buttonLabel="View Profile"
-            />
+            <Card key={guest.id} visitor={guest} showMeetingWith={false} showLocation={true} buttonLabel="View Profile" />
           ))}
           {currentlyPresentGuests.length === 0 && <p className="text-gray-500">No guests currently present.</p>}
         </div>
@@ -96,13 +98,7 @@ const NormalView = () => {
         <h2 className="text-xl font-bold text-gray-700 mb-4">Upcoming Meetings</h2>
         <div className="flex flex-wrap gap-4">
           {upcomingMeetings.map((meeting) => (
-            <Card
-              key={meeting.id}
-              visitor={meeting}
-              showMeetingWith={false}
-              showLocation={false}
-              buttonLabel="View Profile"
-            />
+            <Card key={meeting.id} visitor={meeting} showMeetingWith={false} showLocation={false} buttonLabel="View Profile" />
           ))}
           {upcomingMeetings.length === 0 && <p className="text-gray-500">No upcoming meetings.</p>}
         </div>
@@ -118,15 +114,10 @@ const NormalView = () => {
           onChange={(e) => setSearchQuery(e.target.value)}
           className="mb-4 p-2 border rounded w-full"
         />
+
         <div className="flex flex-wrap gap-4">
           {filteredTodaysMeetings.map((meeting) => (
-            <Card
-              key={meeting.id}
-              visitor={meeting}
-              showMeetingWith={true}
-              showLocation={false}
-              buttonLabel="Assign Card"
-            />
+            <Card key={meeting.id} visitor={meeting} showMeetingWith={true} showLocation={false} buttonLabel="Assign Card" />
           ))}
           {filteredTodaysMeetings.length === 0 && <p className="text-gray-500">No meetings found.</p>}
         </div>

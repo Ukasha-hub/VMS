@@ -8,9 +8,16 @@ const CalendarView = () => {
 
   useEffect(() => {
     const token = localStorage.getItem("access_token");
+    const loggedInUser = JSON.parse(localStorage.getItem("loggedInUser"));
+    const empId = loggedInUser?.emp_id;
+
+    // ✅ If emp_id exists → fetch appointments of that user else fetch all
+    const url = empId
+      ? `/api/v1/appointments/appointments/employee/${empId}`
+      : "/api/v1/appointments/appointments/";
 
     axios
-      .get("/api/v1/appointments/appointments/", {
+      .get(url, {
         headers: { Authorization: `Bearer ${token}` },
       })
       .then((res) => setAppointments(res.data))
@@ -33,7 +40,15 @@ const CalendarView = () => {
     const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(
       day
     ).padStart(2, "0")}`;
-    return appointments.filter((a) => a.appointment_date === dateStr);
+  
+    return appointments
+      .filter((a) => a.appointment_date === dateStr)
+      .sort((a, b) => {
+        // Compare times in HH:MM format
+        const timeA = a.appointment_time.split(":").map(Number);
+        const timeB = b.appointment_time.split(":").map(Number);
+        return timeA[0] - timeB[0] || timeA[1] - timeB[1]; // sort by hour, then minute
+      });
   };
 
   const handlePrevMonth = () => setCurrentDate(new Date(year, month - 1, 1));
@@ -70,19 +85,22 @@ const CalendarView = () => {
 
         {days.map((day, idx) => {
           const dayEvents = getEventsForDate(day);
+
           return (
             <div
               key={idx}
               className="min-h-[80px] border p-1 rounded-lg flex flex-col"
             >
               {day && <span className="font-bold">{day}</span>}
+
               <div className="flex flex-col gap-1 mt-1 text-xs">
                 {dayEvents.map((event) => (
                   <span
                     key={event.id}
                     className="bg-red-100 text-red-600 rounded px-1"
                   >
-                    {event.emp_name} - {event.visitor_name} ({event.appointment_time})
+                    {event.emp_name} - {event.visitor_name} (
+                    {event.appointment_time})
                   </span>
                 ))}
               </div>

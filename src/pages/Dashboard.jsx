@@ -5,7 +5,11 @@ import { RxHamburgerMenu } from "react-icons/rx";
 import vmsLogo from "../assets/vmsLogo.png";
 import dashboardIcon from "../assets/dashboard.png";
 import MakeAppointment from "../assets/MakeAppointment.png";
+import verify from "../assets/verify.png";
+import scan from "../assets/scan.png";
+import history from "../assets/history.png";
 import { Link } from "react-router-dom";
+
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -24,11 +28,11 @@ const Dashboard = () => {
         const parsed = JSON.parse(decodeURIComponent(jsonParam));
         // Store all relevant fields
         const storedUser = {
-          guard_name: parsed.empName || "",
-          designation: parsed.empDesig || "",
+          emp_name: parsed.empName || "",
+          emp_designation: parsed.empDesig || "",
           department: parsed.empDept || "",
           organization: parsed.empOrg || "",
-          username: parsed.empID || "",
+          emp_id: parsed.empID || "",
           email: parsed.empEmail || "",
         };
         localStorage.setItem("loggedInUser", JSON.stringify(storedUser));
@@ -56,14 +60,24 @@ const Dashboard = () => {
     employee: [
       { name: "Home", path: "", icon: dashboardIcon },
       { name: "Make Appointment", path: "makeappointment", icon: MakeAppointment },
-      { name: "Scanned Visitor Info", path: "dashboard/scanqrcode", icon: "" },
-      { name: "Verify Visitor", path: "dashboard/verify/:id", icon: "" },
-      { name: "Visitor History", path: "history", icon: "" },
+      { name: "Scanned Visitor Info", path: "dashboard/scanqrcode", icon: scan },
+      { name: "Verify Visitor", path: "dashboard/verify/:id", icon: verify },
+      { name: "Visitor History", path: "history", icon: history },
     ],
   };
 
-  const userCategory = user?.category?.toLowerCase?.() || "employee";
-  const menus = menusByCategory[userCategory] || menusByCategory.employee;
+  // Filter menus based on user type
+let menus = menusByCategory.employee; // default
+
+if (user) {
+  if (user.emp_name) {
+    // Employee: show all menus
+    menus = menusByCategory.employee;
+  } else if (user.guard_name) {
+    // Guard: hide "Make Appointment"
+    menus = menusByCategory.employee.filter(menu => menu.name !== "Make Appointment");
+  }
+}
 
   const routeTitleMap = {
     "/dashboard/home": "Home",
@@ -150,9 +164,9 @@ const Dashboard = () => {
               <FaUserCircle className="h-8 w-8 md:h-10 md:w-10 text-red-600" />
               <div className="text-left hidden md:block">
                 <p className="text-sm font-semibold text-gray-800">
-                  {user?.guard_name || "Guest"}
+                  {user?.emp_name || user?.guard_name || "Guest"}
                 </p>
-                <p className="text-xs text-gray-500">{user?.designation}</p>
+                <p className="text-xs text-gray-500">{user?.emp_designation || user?.designation }</p>
               </div>
             </div>
           </div>

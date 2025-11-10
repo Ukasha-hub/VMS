@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import axios from "axios";
 import { useLocation } from "react-router-dom";
+import { UserContext } from "../../context/UserContext";
 
 const MakeAppointment = () => {
   const [empName, setEmpName] = useState("");
@@ -23,7 +24,10 @@ const MakeAppointment = () => {
   const [user, setUser] = useState(null);
   const location = useLocation();
 
-  
+  const storedUser = JSON.parse(localStorage.getItem("loggedInUser"));
+const createdBy = storedUser?.emp_name || storedUser?.guard_name || "Unknown";
+
+const { currentUser, updateUser } = useContext(UserContext);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -43,14 +47,14 @@ const MakeAppointment = () => {
       appointment_time: visitingTime,
       status: "Pending", // optional default
       qr_code_path: "string", // optional placeholder
-      created_by: "", // optional
+      created_by: createdBy, // optional
     };
     
     try {
       const token = localStorage.getItem("access_token"); // get token from login
       
       const res = await axios.post(
-        "http://172.16.9.98:8000/api/v1/appointments/appointments/",
+        "/api/v1/appointments/appointments/",
         payload,
         {
           headers: {
@@ -107,15 +111,17 @@ const MakeAppointment = () => {
   
         // Save in localStorage
         const storedUser = {
-          guard_name: data.empName || "",
-          designation: data.empDesig || "",
+          emp_name: data.empName || "",
+          emp_designation: data.empDesig || "",
           department: data.empDept || "",
           organization: data.empOrg || "",
           emp_id: data.empID || "",
           email: data.empEmail || "",
         };
+        console.log(storedUser)
         localStorage.setItem("loggedInUser", JSON.stringify(storedUser));
         setUser(storedUser);
+        updateUser(storedUser);
         localStorage.setItem("isAuthenticated", "true"); // optional
   
       } catch (err) {
@@ -129,8 +135,8 @@ const MakeAppointment = () => {
         setUser(parsedUser);
   
         // Also prefill form
-        setEmpName(parsedUser.guard_name || "");
-        setEmpDesignation(parsedUser.designation || "");
+        setEmpName(parsedUser.emp_name || "");
+        setEmpDesignation(parsedUser.emp_designation || "");
         setEmpEmail(parsedUser.email || "");
         setEmpOrganization(parsedUser.organization || "");
         setEmpId(parsedUser.emp_id || "");

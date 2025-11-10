@@ -1,5 +1,5 @@
 import './App.css';
-import ProtectedRoute from './components/ProtectedRoute';
+import ProtectedRoute from './route/ProtectedRoute';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import Dashboard from './pages/Dashboard';
@@ -9,24 +9,27 @@ import MakeAppointment from './pages/Outlet/MakeAppointment';
 import ScanQRCode from './pages/Outlet/ScanQRCode';
 import VerifyVisitor from './pages/Outlet/VerifyVisitor';
 import HistoryVisit from './pages/Outlet/HistoryVisit';
+import { UserProvider } from './context/UserContext';
 
 function App() {
   // Check empID in URL query
   const location = window.location; 
   const queryParams = new URLSearchParams(location.search);
   const jsonParam = queryParams.get("json");
+  console.log(jsonParam)
   let empIDFound = false;
 
   if (jsonParam) {
     try {
       const parsed = JSON.parse(decodeURIComponent(jsonParam));
-      empIDFound = !!parsed.empID;
+      empIDFound = !!parsed.empName;
     } catch (e) {
       empIDFound = false;
     }
   }
 
   return (
+    <UserProvider>
     <Router>
       <Routes>
         {/* Public routes */}
@@ -54,6 +57,7 @@ function App() {
         </Route>
       </Routes>
     </Router>
+    </UserProvider>
   );
 }
 
