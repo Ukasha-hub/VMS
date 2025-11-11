@@ -13,8 +13,8 @@ const CalendarView = () => {
 
     // ✅ If emp_id exists → fetch appointments of that user else fetch all
     const url = empId
-      ? `/api/v1/appointments/appointments/employee/${empId}`
-      : "/api/v1/appointments/appointments/";
+      ? `${process.env.REACT_APP_API_URL}/api/v1/appointments/appointments/employee/${empId}`
+      : `${process.env.REACT_APP_API_URL}/api/v1/appointments/appointments/`;
 
     axios
       .get(url, {

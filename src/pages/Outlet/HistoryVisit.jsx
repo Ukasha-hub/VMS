@@ -14,8 +14,8 @@ const HistoryVisit = () => {
 
     // If emp_id exists, call user-specific API, otherwise call all-appointment API
     const url = empId
-      ? `/api/v1/appointments/appointments/employee/${empId}`
-      : "/api/v1/appointments/appointments/";
+      ? `${process.env.REACT_APP_API_URL}/api/v1/appointments/appointments/employee/${empId}`
+      : `${process.env.REACT_APP_API_URL}/api/v1/appointments/appointments/`;
 
     axios
       .get(url, {
@@ -32,7 +32,8 @@ const HistoryVisit = () => {
   }, []);
 
   const openModal = (qrPath) => {
-    setSelectedQR(`/${qrPath}`);
+    const fileName = qrPath.split("/").pop(); // <-- Extract only the file name
+    setSelectedQR(`${process.env.REACT_APP_API_URL}/api/v1/appointments/appointments/qr/${fileName}`);
     setShowModal(true);
   };
 
@@ -113,50 +114,79 @@ const HistoryVisit = () => {
 
       {/* Modal */}
       {showModal && (
-        <div
+  <div
+    style={{
+      position: "fixed",
+      top: 0,
+      left: 0,
+      width: "100%",
+      height: "100%",
+      backgroundColor: "rgba(0,0,0,0.8)",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      zIndex: 2000,
+    }}
+    onClick={closeModal}
+  >
+    <div
+      style={{
+        backgroundColor: "#fff",
+        padding: "20px",
+        borderRadius: "12px",
+        textAlign: "center",
+        width: "80vw",
+        height: "90vh",
+        maxWidth: "1200px",
+        display: "flex",
+        flexDirection: "column",
+      }}
+      onClick={(e) => e.stopPropagation()}
+    >
+      {/* ✅ Scrollable QR container */}
+      <div
+        style={{
+          flexGrow: 1,
+          overflowY: "auto",
+          overflowX: "hidden",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "flex-start",
+          paddingTop: "20px",
+        }}
+      >
+        <img
+          src={selectedQR}
+          alt="QR Code"
           style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            width: "100%",
-            height: "100%",
-            backgroundColor: "rgba(0,0,0,0.5)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 1000,
+            width: "auto",
+            minWidth: "600px",
+            height: "auto",
+            minHeight: "800px",
+            objectFit: "contain",
           }}
-          onClick={closeModal}
-        >
-          <div
-            style={{
-              backgroundColor: "#fff",
-              padding: "20px",
-              borderRadius: "8px",
-              textAlign: "center",
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h3>QR Code</h3>
-            <img src={selectedQR} alt="QR Code" width="200" height="200" />
-            <br />
-            <button
-              onClick={closeModal}
-              style={{
-                marginTop: "10px",
-                backgroundColor: "red",
-                color: "white",
-                border: "none",
-                padding: "5px 10px",
-                borderRadius: "4px",
-                cursor: "pointer",
-              }}
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      )}
+        />
+      </div>
+
+      <button
+        onClick={closeModal}
+        style={{
+          backgroundColor: "red",
+          color: "white",
+          border: "none",
+          padding: "10px 15px",
+          borderRadius: "6px",
+          cursor: "pointer",
+          width: "120px",
+          alignSelf: "center",
+          marginTop: "12px",
+        }}
+      >
+        Close
+      </button>
+    </div>
+  </div>
+)}
     </div>
   );
 };

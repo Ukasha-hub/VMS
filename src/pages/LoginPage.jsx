@@ -15,7 +15,7 @@ const LoginPage = () => {
 
     try {
       const res = await axios.post(
-        "/api/v1/auth/auth/guard_login",
+        `${process.env.REACT_APP_API_URL}/api/v1/auth/auth/guard_login`,
         {
           username,
           password,

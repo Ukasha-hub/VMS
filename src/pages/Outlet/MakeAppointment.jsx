@@ -48,25 +48,29 @@ const { currentUser, updateUser } = useContext(UserContext);
       status: "Pending", // optional default
       qr_code_path: "string", // optional placeholder
       created_by: createdBy, // optional
+     // purpose: visitingPurpose,
     };
     
     try {
       const token = localStorage.getItem("access_token"); // get token from login
       
-      const res = await axios.post(
-        "/api/v1/appointments/appointments/",
+      axios.post(
+        `${process.env.REACT_APP_API_URL}/api/v1/appointments/appointments/`,
         payload,
         {
           headers: {
-            Authorization: `Bearer ${token}`, // send token in header
-          
-          },
-         
+            'Content-Type': 'application/json',
+            'erp-payload': JSON.stringify({
+              employee_id: empId,
+              name: empName,
+              department: empDepartment
+            })
+          }
         }
-      );
+     );
     
       alert("Appointment created successfully!");
-      console.log("API Response →", res.data);
+      console.log("API Response →");
     } catch (err) {
       console.error("API POST Error →", err);
       alert("Failed to create appointment");

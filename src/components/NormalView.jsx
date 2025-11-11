@@ -55,8 +55,8 @@ const NormalView = () => {
 
     // ✅ Choose API based on user login
     const apiUrl = empID
-      ? `/api/v1/appointments/appointments/employee/${empID}`
-      : `/api/v1/appointments/appointments/`;
+      ? `${process.env.REACT_APP_API_URL}/api/v1/appointments/appointments/employee/${empID}`
+      : `${process.env.REACT_APP_API_URL}/api/v1/appointments/appointments/`;
 
     axios
       .get(apiUrl, {

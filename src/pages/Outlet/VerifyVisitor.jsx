@@ -11,7 +11,7 @@ const VerifyVisitor = () => {
 
   useEffect(() => {
     // 1️⃣ Fetch appointment info
-    axios.get(`/api/v1/appointments/${id}`)
+    axios.get(`${process.env.REACT_APP_API_URL}/api/v1/appointments/${id}`)
       .then(res => setData(res.data))
       .catch(err => console.error("Not found", err));
 
@@ -21,7 +21,7 @@ const VerifyVisitor = () => {
   }, [id]);
 
   const handleCheckin = async () => {
-    await axios.put(`/api/v1/appointments/${id}`, { checkin_time: new Date() }, {
+    await axios.put(`${process.env.REACT_APP_API_URL}/api/v1/appointments/${id}`, { checkin_time: new Date() }, {
       headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
     });
     alert("Check-in successful!");

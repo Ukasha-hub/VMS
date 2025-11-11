@@ -22,12 +22,13 @@ function App() {
   if (jsonParam) {
     try {
       const parsed = JSON.parse(decodeURIComponent(jsonParam));
-      empIDFound = !!parsed.empName;
+      console.log(parsed)
+      empIDFound = parsed;
     } catch (e) {
       empIDFound = false;
     }
   }
-
+  
   return (
     <UserProvider>
     <Router>
@@ -41,11 +42,13 @@ function App() {
           path="/dashboard"
           element={
             empIDFound ? (
+              
+                <Dashboard />
+             
+            ) : (
               <ProtectedRoute>
                 <Dashboard />
-              </ProtectedRoute>
-            ) : (
-              <Dashboard />
+                </ProtectedRoute>
             )
           }
         >

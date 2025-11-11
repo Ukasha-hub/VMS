@@ -60,9 +60,10 @@ const Dashboard = () => {
     employee: [
       { name: "Home", path: "", icon: dashboardIcon },
       { name: "Make Appointment", path: "makeappointment", icon: MakeAppointment },
-      { name: "Scanned Visitor Info", path: "dashboard/scanqrcode", icon: scan },
-      { name: "Verify Visitor", path: "dashboard/verify/:id", icon: verify },
       { name: "Visitor History", path: "history", icon: history },
+      { name: "Scan Visitor Info", path: "dashboard/scanqrcode", icon: scan },
+      { name: "Verify Visitor", path: "dashboard/verify/:id", icon: verify },
+     
     ],
   };
 
