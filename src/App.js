@@ -10,6 +10,7 @@ import ScanQRCode from './pages/Outlet/ScanQRCode';
 import VerifyVisitor from './pages/Outlet/VerifyVisitor';
 import HistoryVisit from './pages/Outlet/HistoryVisit';
 import { UserProvider } from './context/UserContext';
+import CheckedInVisitors from './pages/Outlet/CheckedInVisitors';
 
 function App() {
   // Check empID in URL query
@@ -54,9 +55,10 @@ function App() {
         >
           <Route path="" element={empIDFound ? <ProtectedRoute><Home /></ProtectedRoute> : <Home />} />
           <Route path="makeappointment" element={empIDFound ? <ProtectedRoute><MakeAppointment /></ProtectedRoute> : <MakeAppointment />} />
-          <Route path="dashboard/scanqrcode" element={empIDFound ? <ProtectedRoute><ScanQRCode /></ProtectedRoute> : <ScanQRCode />} />
+          <Route path="scanqrcode" element={empIDFound ? <ProtectedRoute><ScanQRCode /></ProtectedRoute> : <ScanQRCode />} />
           <Route path="history" element={empIDFound ? <ProtectedRoute><HistoryVisit /></ProtectedRoute> : <HistoryVisit />} />
-          <Route path="dashboard/verify/:id" element={empIDFound ? <ProtectedRoute><VerifyVisitor /></ProtectedRoute> : <VerifyVisitor />} />
+          <Route path="verify" element={empIDFound ? <ProtectedRoute><VerifyVisitor /></ProtectedRoute> : <VerifyVisitor />} />
+          <Route path="checkedin" element={empIDFound ?<ProtectedRoute><CheckedInVisitors /></ProtectedRoute>:<CheckedInVisitors />} />
         </Route>
       </Routes>
     </Router>

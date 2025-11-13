@@ -1,106 +1,120 @@
 import React, { useState } from "react";
-import QrScanner from "react-qr-barcode-scanner";
-import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
-const ScanQRCode = () => {
-  const [visitorData, setVisitorData] = useState(null);
-  const navigate = useNavigate();
+const VerifyQR = () => {
+  const [showModal, setShowModal] = useState(false);
+  const [appointment, setAppointment] = useState(null);
+  const [idCardNumber, setIdCardNumber] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  // ✅ When QR Code is scanned
-  const handleScan = (result) => {
-    if (!result?.text) return;
+  // Function triggered when scanner sends QR text
+  const handleScan = async (e) => {
+    if (e.key === "Enter") {
+      const scannedText = e.target.value.trim();
+      e.target.value = "";
 
-    try {
-      const scannedText = result.text;
+      if (scannedText.startsWith("APPOINTMENT:")) {
+        const id = scannedText.split(":")[1];
 
-      // ✅ If QR contains ?json= then redirect like:
-      // http://example.com?json=encodedData
-      if (scannedText.includes("?json=")) {
-        const queryPart = scannedText.substring(scannedText.indexOf("?"));
-        navigate(`/dashboard/home${queryPart}`);
-        return;
+        try {
+          const res = await axios.get(
+            `${process.env.REACT_APP_API_URL}/api/v1/appointments/appointments/verify/${id}`
+          );
+          setAppointment(res.data);
+          setShowModal(true);
+          console.log("Visitor QR scanned successfully!");
+        } catch (err) {
+          console.error("Verification failed:", err);
+          alert("Invalid or expired QR code.");
+        }
       }
-
-      // ✅ If QR contains JSON visitor data instead of URL
-      const parsed = JSON.parse(scannedText);
-      setVisitorData(parsed);
-    } catch (err) {
-      console.log("Invalid QR Data Format", err);
     }
   };
 
-  const handleError = (error) => {
-    console.error("QR Scan Error: ", error);
+  // Handle Confirm Entry (Check-In)
+  const handleConfirmEntry = async () => {
+    if (!idCardNumber.trim()) {
+      alert("Please enter an ID Card Number.");
+      return;
+    }
+
+    if (!appointment) return;
+
+    try {
+      setLoading(true);
+      const res = await axios.post(
+        `${process.env.REACT_APP_API_URL}/api/v1/appointments/appointments/checkin/${appointment.id}?card_no=${idCardNumber}`
+      );
+
+      console.log("Check-in success:", res.data);
+      alert("Visitor successfully checked in!");
+      setShowModal(false);
+      setIdCardNumber("");
+    } catch (err) {
+      console.error("Check-in failed:", err);
+      alert("Failed to check in visitor.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="flex justify-center items-center w-full">
-      <div className="bg-white/70 backdrop-blur-lg shadow-lg p-8 rounded-xl w-full max-w-5xl">
-        <h2 className="text-xl font-bold mb-3 text-gray-800 text-center">
-          QR Code Scanner
-        </h2>
+    <div className="p-5">
+      <h2 className="text-2xl font-bold mb-3">Scan QR Code</h2>
+      <input
+        type="text"
+        placeholder="Scan QR here..."
+        onKeyDown={handleScan}
+        autoFocus
+        className="border p-2 w-full rounded"
+      />
 
-        {/* ✅ QR CAMERA */}
-        {!visitorData && (
-          <div className="flex flex-col items-center gap-4">
-            <div className="w-full max-w-md border-4 border-red-600 rounded-xl overflow-hidden shadow-lg">
-              <QrScanner
-               constraints={{
-                video: {
-                  width: 500,
-                  height: 500,
-                  facingMode: { ideal: "environment" }
-                }
-              }} // back camera
-                scanDelay={300}
-                onResult={handleScan}
-                onError={handleError}
-                style={{ width: "100%" }}
+      {showModal && appointment && (
+        <div className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-50">
+          <div
+            className="bg-white p-6 rounded-lg w-96 shadow-lg flex flex-col"
+            style={{ maxHeight: "80vh", overflowY: "auto" }}
+          >
+            <img
+              src={`${process.env.REACT_APP_API_URL}/api/v1/appointments/appointments/qr/appointment_${appointment.id}.png`}
+              alt="QR"
+              style={{ width: "100%", borderRadius: "10px" }}
+            />
+            <hr className="my-3" />
+            <p><b>Name:</b> {appointment.visitor_name}</p>
+            <p><b>Meeting:</b> {appointment.emp_name}</p>
+            <p><b>Date:</b> {appointment.appointment_date}</p>
+            <p><b>Time:</b> {appointment.appointment_time}</p>
+
+            <div className="mt-4">
+              <label className="block text-sm font-semibold mb-1">
+                ID Card Number:
+              </label>
+              <input
+                type="text"
+                value={idCardNumber}
+                onChange={(e) => setIdCardNumber(e.target.value)}
+                placeholder="Enter ID Card Number"
+                className="border p-2 w-full rounded"
               />
             </div>
 
-            <p className="text-gray-500 text-sm">
-              Point your camera to a visitor QR code
-            </p>
+            <div className="text-right mt-5">
+              <button
+                className={`px-4 py-2 rounded text-white ${
+                  loading ? "bg-gray-400" : "bg-green-600 hover:bg-green-700"
+                }`}
+                onClick={handleConfirmEntry}
+                disabled={loading}
+              >
+                {loading ? "Checking in..." : "Confirm Entry"}
+              </button>
+            </div>
           </div>
-        )}
-
-        {/* ✅ Display visitor details once QR scanned */}
-        {visitorData && (
-          <>
-            {/* ✅ Visitor Information */}
-            <h2 className="text-xl font-bold mb-3 text-gray-800">
-              Visitor Information
-            </h2>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-white p-4 rounded shadow mb-6">
-              <p><span className="font-semibold">Visitor Name:</span> {visitorData.name}</p>
-              <p><span className="font-semibold">Phone Number:</span> {visitorData.phone}</p>
-              <p><span className="font-semibold">Email:</span> {visitorData.email}</p>
-              <p><span className="font-semibold">Organization:</span> {visitorData.organization}</p>
-              <p><span className="font-semibold">Designation:</span> {visitorData.designation}</p>
-              <p><span className="font-semibold">Department:</span> {visitorData.department}</p>
-              <p><span className="font-semibold">Visiting Time:</span> {visitorData.visitingTime}</p>
-              <p><span className="font-semibold">Visiting Date:</span> {visitorData.visitingDate}</p>
-              <p><span className="font-semibold">Purpose:</span> {visitorData.purpose}</p>
-            </div>
-
-            {/* ✅ Meeting / Employee Info */}
-            <h2 className="text-xl font-bold mb-3 text-gray-800">
-              Employee / Meeting Information
-            </h2>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-white p-4 rounded shadow">
-              <p><span className="font-semibold">Meeting With:</span> {visitorData.meetingWith}</p>
-              <p><span className="font-semibold">Designation:</span> {visitorData.employeeDesignation}</p>
-              <p><span className="font-semibold">Organization:</span> {visitorData.employeeOrg}</p>
-              <p><span className="font-semibold">Department:</span> {visitorData.employeeDept}</p>
-            </div>
-          </>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 };
 
-export default ScanQRCode;
+export default VerifyQR;

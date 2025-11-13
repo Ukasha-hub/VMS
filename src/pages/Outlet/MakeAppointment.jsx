@@ -23,6 +23,7 @@ const MakeAppointment = () => {
 
   const [user, setUser] = useState(null);
   const location = useLocation();
+  const [isLoading, setIsLoading] = useState(true);
 
   const storedUser = JSON.parse(localStorage.getItem("loggedInUser"));
 const createdBy = storedUser?.emp_name || storedUser?.guard_name || "Unknown";
@@ -48,7 +49,7 @@ const { currentUser, updateUser } = useContext(UserContext);
       status: "Pending", // optional default
       qr_code_path: "string", // optional placeholder
       created_by: createdBy, // optional
-     // purpose: visitingPurpose,
+      purpose: visitingPurpose,
     };
     
     try {
@@ -80,7 +81,7 @@ const { currentUser, updateUser } = useContext(UserContext);
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const jsonParam = params.get("json");
-  
+    async function loadUserData() {
     if (jsonParam) {
       try {
         // Fix spaces and decode
@@ -131,26 +132,41 @@ const { currentUser, updateUser } = useContext(UserContext);
       } catch (err) {
         console.error("❌ JSON extraction failed →", err);
       }
-    } else {
-      // No URL param: load from localStorage
-      const storedUser = localStorage.getItem("loggedInUser");
-      if (storedUser) {
-        const parsedUser = JSON.parse(storedUser);
-        setUser(parsedUser);
-  
-        // Also prefill form
-        setEmpName(parsedUser.emp_name || "");
-        setEmpDesignation(parsedUser.emp_designation || "");
-        setEmpEmail(parsedUser.email || "");
-        setEmpOrganization(parsedUser.organization || "");
-        setEmpId(parsedUser.emp_id || "");
-        setEmpDepartment(parsedUser.department || "");
-      }
+    } 
+    
+      // Load from localStorage (even if URL JSON failed)
+    const local = localStorage.getItem("loggedInUser");
+    if (local) {
+      const parsedUser = JSON.parse(local);
+      setUser(parsedUser);
+
+      // Prefill form
+      setEmpName(parsedUser.emp_name || "");
+      setEmpDesignation(parsedUser.emp_designation || "");
+      setEmpEmail(parsedUser.email || "");
+      setEmpOrganization(parsedUser.organization || "");
+      setEmpId(parsedUser.emp_id || "");
+      setEmpDepartment(parsedUser.department || "");
     }
+
+    setIsLoading(false); // ✅ Now safe to render form
+  }
+
+  loadUserData();
+   
   }, [location.search]);
+
   
+  if (isLoading) {
+    return (
+      <div className="text-center p-8 text-red-600 font-semibold">
+        Loading Employee Info...
+      </div>
+    );
+  }
 
   return (
+    
     <div className="flex justify-center">
       <div className="bg-white/70 backdrop-blur-lg shadow-lg p-8 rounded-xl w-full max-w-5xl">
         <h2 className="text-lg font-bold text-red-600 mb-4">Employee Info</h2>

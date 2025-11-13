@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate, Outlet, useLocation } from "react-router-dom";
+import { useNavigate, Outlet, useLocation, Link } from "react-router-dom";
 import { FaBell, FaUserCircle } from "react-icons/fa";
 import { RxHamburgerMenu } from "react-icons/rx";
 import vmsLogo from "../assets/vmsLogo.png";
@@ -8,8 +8,6 @@ import MakeAppointment from "../assets/MakeAppointment.png";
 import verify from "../assets/verify.png";
 import scan from "../assets/scan.png";
 import history from "../assets/history.png";
-import { Link } from "react-router-dom";
-
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -17,16 +15,16 @@ const Dashboard = () => {
   const [user, setUser] = useState(null);
   const [notifications, setNotifications] = useState(3);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [loadingUser, setLoadingUser] = useState(true);
 
   useEffect(() => {
-    // Extract all employee info from URL query if present
     const queryParams = new URLSearchParams(location.search);
     const jsonParam = queryParams.get("json");
 
     if (jsonParam) {
       try {
         const parsed = JSON.parse(decodeURIComponent(jsonParam));
-        // Store all relevant fields
+
         const storedUser = {
           emp_name: parsed.empName || "",
           emp_designation: parsed.empDesig || "",
@@ -35,57 +33,61 @@ const Dashboard = () => {
           emp_id: parsed.empID || "",
           email: parsed.empEmail || "",
         };
+
         localStorage.setItem("loggedInUser", JSON.stringify(storedUser));
-        setUser(storedUser);
-        // Optional: set isAuthenticated automatically
         localStorage.setItem("isAuthenticated", "true");
+        setUser(storedUser);
       } catch (err) {
         console.error("Failed to parse JSON param:", err);
       }
     } else {
-      // Fallback to existing localStorage
       const storedUser = localStorage.getItem("loggedInUser");
       if (storedUser) setUser(JSON.parse(storedUser));
     }
+
+    setLoadingUser(false);
   }, [location.search]);
 
   const handleLogout = () => {
     localStorage.removeItem("isAuthenticated");
     localStorage.removeItem("loggedInUser");
+    localStorage.removeItem("access_token");
     navigate("/");
   };
 
   // Sidebar menus
-  const menusByCategory = {
-    employee: [
-      { name: "Home", path: "", icon: dashboardIcon },
-      { name: "Make Appointment", path: "makeappointment", icon: MakeAppointment },
-      { name: "Visitor History", path: "history", icon: history },
-      { name: "Scan Visitor Info", path: "dashboard/scanqrcode", icon: scan },
-      { name: "Verify Visitor", path: "dashboard/verify/:id", icon: verify },
-     
-    ],
-  };
+  const allMenus = [
+    { name: "Home", path: "", icon: dashboardIcon },
+    { name: "Make Appointment", path: "makeappointment", icon: MakeAppointment },
+    { name: "Visitor History", path: "history", icon: history },
+    { name: "Scan Visitor Info", path: "scanqrcode", icon: scan },
+    { name: "Checked In Visitors", path: "checkedin", icon: verify },
+  ];
 
   // Filter menus based on user type
-let menus = menusByCategory.employee; // default
+  let menus = allMenus;
 
-if (user) {
-  if (user.emp_name) {
-    // Employee: show all menus
-    menus = menusByCategory.employee;
-  } else if (user.guard_name) {
-    // Guard: hide "Make Appointment"
-    menus = menusByCategory.employee.filter(menu => menu.name !== "Make Appointment");
+  if (user) {
+    if (user.emp_name) {
+      // Employee: hide "Scan Visitor Info"
+      menus = allMenus.filter((menu) => menu.name !== "Scan Visitor Info");
+    } else if (user.guard_name) {
+      // Guard: hide "Make Appointment"
+      menus = allMenus.filter((menu) => menu.name !== "Make Appointment");
+    }
   }
-}
 
   const routeTitleMap = {
     "/dashboard/home": "Home",
     "/dashboard/makeappointment": "Make Appointment",
+    "/dashboard/history": "Visitor History",
+    "/dashboard/scanqrcode": "Scan Visitor Info",
+    "/dashboard/checkedin": "Checked In Visitors",
   };
 
   const pageTitle = routeTitleMap[location.pathname] || "Dashboard";
+
+  if (loadingUser) return null;
 
   return (
     <div className="flex h-screen">
@@ -111,7 +113,11 @@ if (user) {
               className="flex items-center p-2 rounded hover:bg-gray-100 hover:text-red-600 transition"
             >
               {menu.icon && (
-                <img src={menu.icon} alt={menu.name} className="h-5 w-5 object-contain mr-2" />
+                <img
+                  src={menu.icon}
+                  alt={menu.name}
+                  className="h-5 w-5 object-contain mr-2"
+                />
               )}
               <span>{menu.name}</span>
             </Link>
@@ -136,18 +142,26 @@ if (user) {
       )}
 
       {/* Main content */}
-      <div className={`flex-1 flex flex-col transition-all duration-300 ${sidebarOpen ? "ml-64" : "ml-0"} md:ml-64`}>
+      <div
+        className={`flex-1 flex flex-col transition-all duration-300 ${
+          sidebarOpen ? "ml-64" : "ml-0"
+        } md:ml-64`}
+      >
         {/* Header */}
         <header
           className={`h-16 bg-white border-b-4 border-red-200 flex items-center justify-between px-4 md:px-6 fixed z-20 transition-all duration-300
-          ${sidebarOpen ? "w-[calc(100%-16rem)]" : "w-full"} md:w-[calc(100%-16rem)]`}
+          ${
+            sidebarOpen ? "w-[calc(100%-16rem)]" : "w-full"
+          } md:w-[calc(100%-16rem)]`}
         >
           <div className="flex items-center gap-2">
             <RxHamburgerMenu
               onClick={() => setSidebarOpen(!sidebarOpen)}
               className="text-red-600 text-2xl md:hidden cursor-pointer"
             />
-            <h1 className="text-red-500 font-bold capitalize text-xs md:text-xl">{pageTitle}</h1>
+            <h1 className="text-red-500 font-bold capitalize text-xs md:text-xl">
+              {pageTitle}
+            </h1>
           </div>
 
           {/* Right section */}
@@ -167,7 +181,9 @@ if (user) {
                 <p className="text-sm font-semibold text-gray-800">
                   {user?.emp_name || user?.guard_name || "Guest"}
                 </p>
-                <p className="text-xs text-gray-500">{user?.emp_designation || user?.designation }</p>
+                <p className="text-xs text-gray-500">
+                  {user?.emp_designation || user?.designation}
+                </p>
               </div>
             </div>
           </div>
