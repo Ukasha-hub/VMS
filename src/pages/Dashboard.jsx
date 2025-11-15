@@ -125,12 +125,14 @@ const Dashboard = () => {
         </nav>
 
         {/* Logout button */}
-        <button
-          onClick={handleLogout}
-          className="m-4 p-2 bg-red-500 rounded hover:bg-red-600"
-        >
-          Logout
-        </button>
+        {!user?.emp_name && (
+          <button
+            onClick={handleLogout}
+            className="m-4 p-2 bg-red-500 rounded hover:bg-red-600"
+          >
+            Logout
+          </button>
+        )}
       </aside>
 
       {/* Overlay for mobile */}

@@ -52,7 +52,18 @@ const VerifyQR = () => {
       setIdCardNumber("");
     } catch (err) {
       console.error("Check-in failed:", err);
-      alert("Failed to check in visitor.");
+    
+      if (err.response?.status === 400) {
+        const message = err.response.data?.detail || "Check-in error";
+    
+        if (message.includes("already in use")) {
+          alert("❌ This ID Card number is already assigned to another visitor who is still inside.");
+        } else {
+          alert(message);
+        }
+      } else {
+        alert("Failed to check in visitor.");
+      }
     } finally {
       setLoading(false);
     }
@@ -69,50 +80,64 @@ const VerifyQR = () => {
         className="border p-2 w-full rounded"
       />
 
-      {showModal && appointment && (
-        <div className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-50">
-          <div
-            className="bg-white p-6 rounded-lg w-96 shadow-lg flex flex-col"
-            style={{ maxHeight: "80vh", overflowY: "auto" }}
-          >
-            <img
-              src={`${process.env.REACT_APP_API_URL}/api/v1/appointments/appointments/qr/appointment_${appointment.id}.png`}
-              alt="QR"
-              style={{ width: "100%", borderRadius: "10px" }}
-            />
-            <hr className="my-3" />
-            <p><b>Name:</b> {appointment.visitor_name}</p>
-            <p><b>Meeting:</b> {appointment.emp_name}</p>
-            <p><b>Date:</b> {appointment.appointment_date}</p>
-            <p><b>Time:</b> {appointment.appointment_time}</p>
+{showModal && appointment && (
+  <div className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-50 z-50">
+    <div
+      className="bg-white p-6 rounded-lg w-[600px] shadow-xl flex flex-col relative"
+      style={{ maxHeight: "85vh", overflowY: "auto" }}
+    >
+      {/* Close button */}
+      <button
+        onClick={() => setShowModal(false)}
+        className="absolute top-3 right-3 text-gray-600 hover:text-gray-800 text-xl font-bold"
+      >
+        &times;
+      </button>
 
-            <div className="mt-4">
-              <label className="block text-sm font-semibold mb-1">
-                ID Card Number:
-              </label>
-              <input
-                type="text"
-                value={idCardNumber}
-                onChange={(e) => setIdCardNumber(e.target.value)}
-                placeholder="Enter ID Card Number"
-                className="border p-2 w-full rounded"
-              />
-            </div>
+      {/* QR Image */}
+      <div className="flex justify-center mb-4">
+        <img
+          src={`${process.env.REACT_APP_API_URL}/api/v1/appointments/appointments/qr/appointment_${appointment.id}.png`}
+          alt="QR"
+          className="w-36 h-36 rounded-lg"
+        />
+      </div>
 
-            <div className="text-right mt-5">
-              <button
-                className={`px-4 py-2 rounded text-white ${
-                  loading ? "bg-gray-400" : "bg-green-600 hover:bg-green-700"
-                }`}
-                onClick={handleConfirmEntry}
-                disabled={loading}
-              >
-                {loading ? "Checking in..." : "Confirm Entry"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <hr className="my-3" />
+
+      <p className="py-1"><b>Visitor Name:</b> {appointment.visitor_name}</p>
+      <p className="py-1"><b>Meeting With:</b> {appointment.emp_name}</p>
+      <p className="py-1"><b>Date:</b> {appointment.appointment_date}</p>
+      <p className="py-1"><b>Time:</b> {appointment.appointment_time}</p>
+
+      <div className="mt-4">
+        <label className="block text-sm font-semibold mb-1">
+          ID Card Number:
+        </label>
+        <input
+          type="text"
+          value={idCardNumber}
+          onChange={(e) => setIdCardNumber(e.target.value)}
+          placeholder="Enter ID Card Number"
+          className="border p-2 w-full rounded"
+        />
+      </div>
+
+      <div className="flex justify-center mt-5">
+        <button
+          className={`px-5 py-2 rounded text-white text-lg ${
+            loading ? "bg-gray-400" : "bg-red-600 hover:bg-red-700"
+          }`}
+          onClick={handleConfirmEntry}
+          disabled={loading}
+        >
+          {loading ? "Checking in..." : "Confirm Entry"}
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
     </div>
   );
 };

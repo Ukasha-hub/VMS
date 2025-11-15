@@ -6,11 +6,7 @@ import location from "../assets/location.png";
 
 const Card = ({ visitor, showMeetingWith, showLocation, buttonLabel }) => (
   <div className="bg-white shadow-lg rounded-xl p-5 flex gap-4 justify-center w-full sm:w-[48%] lg:w-[30%]">
-    <img
-      src={visitor.img || "https://randomuser.me/api/portraits/lego/1.jpg"}
-      alt={visitor.visitor_name || visitor.name}
-      className="h-16 w-16 rounded-full object-cover"
-    />
+    
     <div className="flex-1 flex flex-col gap-1">
       <p className="font-semibold text-gray-800">{visitor.visitor_name || visitor.name}</p>
       {visitor.visitor_designation && <p className="text-gray-500">{visitor.visitor_designation}</p>}
@@ -18,7 +14,7 @@ const Card = ({ visitor, showMeetingWith, showLocation, buttonLabel }) => (
         <img src={briefcase} alt="" />
         {visitor.visitor_organization || visitor.company}
       </p>
-      <p className="text-gray-500 text-xs flex flex-row gap-1">
+      <p className="text-gray-500 text-md flex flex-row gap-1">
         <img src={calendar} alt="" />
         {visitor.appointment_date}, {visitor.appointment_time}
       </p>
@@ -82,30 +78,8 @@ const NormalView = () => {
 
   return (
     <div className="space-y-8">
-      {/* Currently Present Guests */}
-      <div>
-        <h2 className="text-xl font-bold text-gray-700 mb-4">Currently Present Guests</h2>
-        <div className="flex flex-wrap gap-4">
-          {currentlyPresentGuests.map((guest) => (
-            <Card key={guest.id} visitor={guest} showMeetingWith={false} showLocation={true} buttonLabel="View Profile" />
-          ))}
-          {currentlyPresentGuests.length === 0 && <p className="text-gray-500">No guests currently present.</p>}
-        </div>
-      </div>
-
-      {/* Upcoming Meetings */}
-      <div>
-        <h2 className="text-xl font-bold text-gray-700 mb-4">Upcoming Meetings</h2>
-        <div className="flex flex-wrap gap-4">
-          {upcomingMeetings.map((meeting) => (
-            <Card key={meeting.id} visitor={meeting} showMeetingWith={false} showLocation={false} buttonLabel="View Profile" />
-          ))}
-          {upcomingMeetings.length === 0 && <p className="text-gray-500">No upcoming meetings.</p>}
-        </div>
-      </div>
-
-      {/* Today's Meetings */}
-      <div>
+       {/* Today's Meetings */}
+       <div>
         <h2 className="text-xl font-bold text-gray-700 mb-2">Today's Meetings</h2>
         <input
           type="text"
@@ -122,6 +96,22 @@ const NormalView = () => {
           {filteredTodaysMeetings.length === 0 && <p className="text-gray-500">No meetings found.</p>}
         </div>
       </div>
+       {/* Upcoming Meetings */}
+       <div>
+        <h2 className="text-xl font-bold text-gray-700 mb-4">Upcoming Meetings</h2>
+        <div className="flex flex-wrap gap-4">
+          {upcomingMeetings.map((meeting) => (
+            <Card key={meeting.id} visitor={meeting} showMeetingWith={false} showLocation={false} buttonLabel="View Profile" />
+          ))}
+          {upcomingMeetings.length === 0 && <p className="text-gray-500">No upcoming meetings.</p>}
+        </div>
+      </div>
+      {/* Currently Present Guests */}
+      
+
+     
+
+     
     </div>
   );
 };
