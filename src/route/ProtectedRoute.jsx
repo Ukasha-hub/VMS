@@ -1,15 +1,18 @@
-import React from 'react'
-import { Navigate } from "react-router-dom";
+import React from "react";
+import { Navigate, useLocation } from "react-router-dom";
 
 const ProtectedRoute = ({ children }) => {
-    const isAuthenticated = localStorage.getItem("isAuthenticated");
-  
-    if (!isAuthenticated) {
-      return <Navigate to="/" replace />;
-    }
-  
-    return children;
-  };
-  
+  const isAuthenticated = localStorage.getItem("isAuthenticated");
+  const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
+  const jsonParam = queryParams.get("json");
 
-export default ProtectedRoute
+  // If authenticated OR there's a json payload, allow access
+  if (!isAuthenticated && !jsonParam) {
+    return <Navigate to="/" replace />;
+  }
+
+  return children;
+};
+
+export default ProtectedRoute;

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { useNavigate, Outlet, useLocation, Link } from "react-router-dom";
 import { FaBell, FaUserCircle } from "react-icons/fa";
 import { RxHamburgerMenu } from "react-icons/rx";
@@ -8,6 +8,8 @@ import MakeAppointment from "../assets/MakeAppointment.png";
 import verify from "../assets/verify.png";
 import scan from "../assets/scan.png";
 import history from "../assets/history.png";
+import { decryptAES } from "../utils/decryptAES";
+import { UserContext } from "../context/UserContext";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -16,37 +18,77 @@ const Dashboard = () => {
   const [notifications, setNotifications] = useState(3);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [loadingUser, setLoadingUser] = useState(true);
+  const { currentUser, updateUser } = useContext(UserContext);
 
+  function urlSafeBase64ToBase64(str) {
+    str = str.replace(/-/g, "+").replace(/_/g, "/");
+    while (str.length % 4) str += "=";
+    return str;
+  }
+  
+  const secretKey = "1234567890123456";
+  const iv = "abcdefghijklmnop";
+  
   useEffect(() => {
     const queryParams = new URLSearchParams(location.search);
     const jsonParam = queryParams.get("json");
-
-    if (jsonParam) {
-      try {
-        const parsed = JSON.parse(decodeURIComponent(jsonParam));
-
-        const storedUser = {
-          emp_name: parsed.empName || "",
-          emp_designation: parsed.empDesig || "",
-          department: parsed.empDept || "",
-          organization: parsed.empOrg || "",
-          emp_id: parsed.empID || "",
-          email: parsed.empEmail || "",
-        };
-
-        localStorage.setItem("loggedInUser", JSON.stringify(storedUser));
-        localStorage.setItem("isAuthenticated", "true");
-        setUser(storedUser);
-      } catch (err) {
-        console.error("Failed to parse JSON param:", err);
+  
+    const loadUser = async () => {
+      let userData = null;
+  
+      // If encrypted payload exists in URL, try to decrypt
+      if (jsonParam) {
+        try {
+          const decodedParam = decodeURIComponent(jsonParam); // decode URL-encoded string
+          const standardBase64 = urlSafeBase64ToBase64(decodedParam); // URL-safe → Base64
+          const decrypted = decryptAES(standardBase64, secretKey, iv);
+  
+          if (decrypted) {
+            const storedUser = {
+              emp_name: decrypted.empName || "",
+              emp_designation: decrypted.empDesig || "",
+              department: decrypted.empDept || "",
+              organization: decrypted.empOrg || "",
+              emp_id: decrypted.empID || "",
+              email: decrypted.empEmail || "",
+            };
+  
+            // Update localStorage and context
+            localStorage.setItem("loggedInUser", JSON.stringify(storedUser));
+            localStorage.setItem("isAuthenticated", "true");
+            updateUser(storedUser);
+            setUser(storedUser);
+            userData = storedUser;
+          }
+        } catch (err) {
+          console.error("Decryption failed:", err);
+        }
       }
-    } else {
-      const storedUser = localStorage.getItem("loggedInUser");
-      if (storedUser) setUser(JSON.parse(storedUser));
-    }
-
-    setLoadingUser(false);
+  
+      // If no URL payload or decryption failed, fallback to localStorage
+      if (!userData) {
+        const storedUser = localStorage.getItem("loggedInUser");
+        if (storedUser) {
+          const parsedUser = JSON.parse(storedUser);
+          setUser(parsedUser);
+          updateUser(parsedUser);
+        }
+      }
+  
+      setLoadingUser(false);
+    };
+  
+    loadUser();
   }, [location.search]);
+
+// Redirect if no user and no URL payload
+useEffect(() => {
+  const queryParams = new URLSearchParams(location.search);
+  const jsonParam = queryParams.get("json");
+  if (!currentUser && !jsonParam && !loadingUser) {
+    navigate("/");
+  }
+}, [currentUser, location.search, loadingUser, navigate]);
 
   const handleLogout = () => {
     localStorage.removeItem("isAuthenticated");

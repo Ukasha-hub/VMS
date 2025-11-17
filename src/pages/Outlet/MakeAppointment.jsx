@@ -1,7 +1,9 @@
 import React, { useContext, useEffect, useState } from "react";
 import axios from "axios";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { UserContext } from "../../context/UserContext";
+import CryptoJS from "crypto-js";
+import { decryptAES } from "../../utils/decryptAES";
 
 const MakeAppointment = () => {
   const [empName, setEmpName] = useState("");
@@ -21,6 +23,8 @@ const MakeAppointment = () => {
   const [visitingTime, setVisitingTime] = useState("");
   const [visitingPurpose, setVisitingPurpose] = useState("");
 
+  
+
   const [user, setUser] = useState(null);
   const location = useLocation();
   const [isLoading, setIsLoading] = useState(true);
@@ -29,6 +33,17 @@ const MakeAppointment = () => {
 const createdBy = storedUser?.emp_name || storedUser?.guard_name || "Unknown";
 
 const { currentUser, updateUser } = useContext(UserContext);
+const navigate = useNavigate();
+
+
+
+function urlSafeBase64ToBase64(str) {
+  str = str.replace(/-/g, "+").replace(/_/g, "/");
+  while (str.length % 4) {
+    str += "=";
+  }
+  return str;
+}
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -78,84 +93,84 @@ const { currentUser, updateUser } = useContext(UserContext);
     }
   };
 
-  useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const jsonParam = params.get("json");
-    async function loadUserData() {
-    if (jsonParam) {
-      try {
-        // Fix spaces and decode
-        let decoded = decodeURIComponent(jsonParam.replace(/\+/g, " "));
-  
-        // Auto-fix missing closing quotes or braces
-        if (decoded.endsWith('"') === false && !decoded.endsWith('"}')) {
-          decoded = decoded + '"}';
-        }
-        if (!decoded.endsWith("}")) {
-          decoded += "}";
-        }
-  
-        // Try parsing
-        let data;
-        try {
-          data = JSON.parse(decoded);
-        } catch {
-          // Last attempt: remove last bad character
-          data = JSON.parse(decoded.slice(0, decoded.lastIndexOf("}") + 1));
-        }
-  
-        console.log("Extracted JSON →", data);
-  
-        // Set form state
-        setEmpName(data.empName || "");
-        setEmpDesignation(data.empDesig || "");
-        setEmpEmail(data.empEmail || "");
-        setEmpOrganization(data.empOrg || "");
-        setEmpId(data.empID || "");
-        setEmpDepartment(data.empDept || "");
-  
-        // Save in localStorage
-        const storedUser = {
-          emp_name: data.empName || "",
-          emp_designation: data.empDesig || "",
-          department: data.empDept || "",
-          organization: data.empOrg || "",
-          emp_id: data.empID || "",
-          email: data.empEmail || "",
-        };
-        console.log(storedUser)
-        localStorage.setItem("loggedInUser", JSON.stringify(storedUser));
-        setUser(storedUser);
-        updateUser(storedUser);
-        localStorage.setItem("isAuthenticated", "true"); // optional
-  
-      } catch (err) {
-        console.error("❌ JSON extraction failed →", err);
-      }
-    } 
-    
-      // Load from localStorage (even if URL JSON failed)
-    const local = localStorage.getItem("loggedInUser");
-    if (local) {
-      const parsedUser = JSON.parse(local);
-      setUser(parsedUser);
-
-      // Prefill form
-      setEmpName(parsedUser.emp_name || "");
-      setEmpDesignation(parsedUser.emp_designation || "");
-      setEmpEmail(parsedUser.email || "");
-      setEmpOrganization(parsedUser.organization || "");
-      setEmpId(parsedUser.emp_id || "");
-      setEmpDepartment(parsedUser.department || "");
-    }
-
-    setIsLoading(false); // ✅ Now safe to render form
+  function urlSafeBase64ToBase64(str) {
+    str = str.replace(/-/g, "+").replace(/_/g, "/");
+    while (str.length % 4) str += "=";
+    return str;
   }
-
-  loadUserData();
-   
+  
+  const secretKey = "1234567890123456";
+  const iv = "abcdefghijklmnop";
+  
+  useEffect(() => {
+    const queryParams = new URLSearchParams(location.search);
+    const jsonParam = queryParams.get("json");
+  
+    const loadUser = async () => {
+      let userData = null;
+  
+      // If encrypted payload exists in URL, try to decrypt
+      if (jsonParam) {
+        try {
+          const decodedParam = decodeURIComponent(jsonParam); // decode URL-encoded string
+          const standardBase64 = urlSafeBase64ToBase64(decodedParam); // URL-safe → Base64
+          const decrypted = decryptAES(standardBase64, secretKey, iv);
+  
+          if (decrypted) {
+            const storedUser = {
+              emp_name: decrypted.empName || "",
+              emp_designation: decrypted.empDesig || "",
+              department: decrypted.empDept || "",
+              organization: decrypted.empOrg || "",
+              emp_id: decrypted.empID || "",
+              email: decrypted.empEmail || "",
+            };
+          
+            // Save to localStorage
+            localStorage.setItem("loggedInUser", JSON.stringify(storedUser));
+            localStorage.setItem("isAuthenticated", "true");
+          
+            // Update context
+            updateUser(storedUser);
+            setUser(storedUser);
+          
+            // ⭐ PREFILL FORM FIELDS IMMEDIATELY ⭐
+            setEmpName(storedUser.emp_name);
+            setEmpDesignation(storedUser.emp_designation);
+            setEmpEmail(storedUser.email);
+            setEmpOrganization(storedUser.organization);
+            setEmpId(storedUser.emp_id);
+            setEmpDepartment(storedUser.department);
+          
+            userData = storedUser;
+          }
+        } catch (err) {
+          console.error("Decryption failed:", err);
+        }
+      }
+  
+      setEmpName(storedUser.emp_name);
+            setEmpDesignation(storedUser.emp_designation);
+            setEmpEmail(storedUser.email);
+            setEmpOrganization(storedUser.organization);
+            setEmpId(storedUser.emp_id);
+            setEmpDepartment(storedUser.department);
+  
+      setIsLoading(false);
+    };
+  
+    loadUser();
   }, [location.search]);
 
+   // Redirect if no user and no URL payload
+   useEffect(() => {
+    const queryParams = new URLSearchParams(location.search);
+    const jsonParam = queryParams.get("json");
+    if (!currentUser && !jsonParam && !isLoading) {
+      navigate("/");
+    }
+  }, [currentUser, location.search, isLoading, navigate]);
+  
   
   if (isLoading) {
     return (
