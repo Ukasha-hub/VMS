@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useRef, useState } from "react";
 import { useNavigate, Outlet, useLocation, Link } from "react-router-dom";
 import { FaBell, FaUserCircle } from "react-icons/fa";
 import { RxHamburgerMenu } from "react-icons/rx";
@@ -19,6 +19,20 @@ const Dashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [loadingUser, setLoadingUser] = useState(true);
   const { currentUser, updateUser } = useContext(UserContext);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+
+  const dropdownRef = useRef(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   function urlSafeBase64ToBase64(str) {
     str = str.replace(/-/g, "+").replace(/_/g, "/");
@@ -135,9 +149,11 @@ useEffect(() => {
     <div className="flex h-screen">
       {/* Sidebar */}
       <aside
-        className={`bg-red-600 text-white fixed top-0 left-0 h-full w-64 flex flex-col transform transition-transform duration-300
-        ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0`}
-      >
+  className={`bg-red-600 text-white fixed top-0 left-0 h-full w-64 flex flex-col 
+  transform transition-transform duration-300 z-30
+  ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} 
+  md:translate-x-0`}
+>
         <div className="pt-2 border-b-2 border-red-400 pb-1 pl-4 flex flex-row gap-2 items-center">
           <img src={vmsLogo} alt="VMS Logo" className="h-12 w-auto" />
           <div className="flex flex-col leading-tight">
@@ -220,7 +236,42 @@ useEffect(() => {
             </button>
 
             <div className="flex items-center gap-2 md:gap-3">
-              <FaUserCircle className="h-8 w-8 md:h-10 md:w-10 text-red-600" />
+            <div className="flex items-center gap-4 md:gap-6 relative" ref={dropdownRef}>
+      <button
+        className="relative bg-yellow-200 p-2 rounded-full hover:bg-gray-200"
+        onClick={() => setDropdownOpen(!dropdownOpen)}
+      >
+        <FaUserCircle className="h-8 w-8 md:h-10 md:w-10 text-red-600" />
+      </button>
+
+      {dropdownOpen && (
+        <div className="absolute right-3 top-10 mt-2 w-60 bg-white shadow-lg rounded-md border border-gray-200 z-50 p-4">
+          {/* Pointy arrow */}
+          <div className="absolute top-[-6px] right-4 w-0 h-0 border-l-6 border-l-transparent border-r-6 border-r-transparent border-b-6 border-b-white"></div>
+
+          {user?.emp_name ? (
+            <>
+              <p className="font-bold text-red-600">{user.emp_name}</p>
+              <p className="text-sm text-gray-700">ID: {user.emp_id}</p>
+              <p className="text-sm text-gray-700">Designation: {user.emp_designation}</p>
+              <p className="text-sm text-gray-700">Email: {user.email}</p>
+              <p className="text-sm text-gray-700">Department: {user.department}</p>
+              <p className="text-sm text-gray-700">Organization: {user.organization}</p>
+            </>
+          ) : user?.guard_name ? (
+            <>
+              <p className="font-bold text-red-600">{user.guard_name}</p>
+              <p className="text-sm text-gray-700">Designation: {user.designation}</p>
+              <p className="text-sm text-gray-700">Username: {user.username}</p>
+            </>
+          ) : (
+            <p className="text-sm text-gray-700">Guest</p>
+          )}
+
+         
+        </div>
+      )}
+    </div>
               <div className="text-left hidden md:block">
                 <p className="text-sm font-semibold text-gray-800">
                   {user?.emp_name || user?.guard_name || "Guest"}

@@ -60,6 +60,7 @@ const HistoryVisit = () => {
             <th>Employee Name</th>
             <th>Appointment Date</th>
             <th>Appointment Time</th>
+            <th>Valid Till</th>
             <th>Status</th>
             <th>QR Code</th>
           </tr>
@@ -86,6 +87,7 @@ const HistoryVisit = () => {
         <td>{item.emp_name}</td>
         <td>{item.appointment_date}</td>
         <td>{item.appointment_time}</td>
+        <td>{item.valid_till}</td>
         <td>{item.status}</td>
         <td>
           {item.qr_code_path ? (

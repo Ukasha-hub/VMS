@@ -5,6 +5,66 @@ import { UserContext } from "../../context/UserContext";
 import CryptoJS from "crypto-js";
 import { decryptAES } from "../../utils/decryptAES";
 
+const OutlinedInput = ({
+  label,
+  value,
+  onChange,
+  type = "text",
+  required = false,
+  readOnly = false,
+  as = "input", // "input" | "textarea" | "select"
+  options = [], // only for select
+}) => {
+  const commonClasses =
+    "w-full border border-gray-400 rounded-md px-3 pt-5 pb-2 focus:outline-none focus:border-red-600";
+
+  return (
+    <div className="relative w-full mt-4">
+      {/* Floating Label */}
+      <label className="absolute -top-2 left-3 px-1 bg-white text-sm font-bold text-black">
+        {label} {required && "*"}
+      </label>
+
+      {/* Input / Textarea / Select */}
+      {as === "textarea" ? (
+        <textarea
+          value={value}
+          onChange={onChange}
+          required={required}
+          readOnly={readOnly}
+          rows={4}
+          className={`${commonClasses} ${readOnly ? "bg-gray-100 cursor-not-allowed" : "text-xs"}`}
+        />
+      ) : as === "select" ? (
+        <select
+          value={value}
+          onChange={onChange}
+          required={required}
+          disabled={readOnly}
+          className={`${commonClasses} ${readOnly ? "bg-gray-100 cursor-not-allowed" : "h-15 text-xs"}`}
+        >
+          <option value="">Select {label}</option>
+          {options.map((opt, i) => (
+            <option key={i} value={opt.value || opt}>
+              {opt.label || opt}
+            </option>
+          ))}
+        </select>
+      ) : (
+        <input
+          type={type}
+          value={value}
+          onChange={onChange}
+          required={required}
+          readOnly={readOnly}
+          className={`${commonClasses} ${readOnly ? "bg-gray-100 h-10 text-xs cursor-not-allowed" : "h-10 text-xs"}`}
+        />
+      )}
+    </div>
+  );
+};
+
+// ====================================================================
 const MakeAppointment = () => {
   const [empName, setEmpName] = useState("");
   const [empDesignation, setEmpDesignation] = useState("");
@@ -22,6 +82,10 @@ const MakeAppointment = () => {
   const [visitingDate, setVisitingDate] = useState("");
   const [visitingTime, setVisitingTime] = useState("");
   const [visitingPurpose, setVisitingPurpose] = useState("");
+ const [meetingFloor, setMeetingFloor] = useState("")
+ const [visitingTill, setVisitingTill] = useState("")
+
+ const [roomType, setRoomType] = useState("self")
 
   
 
@@ -47,6 +111,16 @@ function urlSafeBase64ToBase64(str) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+     // --- TIME VALIDATION ---
+  if (visitingTime && visitingTill) {
+    const start = visitingTime;
+    const end = visitingTill;
+
+    if (end <= start) {
+      alert("Visiting Till time must be later than Visiting Time.");
+      return; // ❌ STOP submit
+    }
+  }
     const payload = {
       emp_name: empName,
       emp_organization: empOrganization,
@@ -64,6 +138,10 @@ function urlSafeBase64ToBase64(str) {
       status: "Pending", // optional default
       qr_code_path: "string", // optional placeholder
       created_by: createdBy, // optional
+     
+      meeting_floor: meetingFloor,
+      meeting_room: roomType,
+      valid_till: visitingTill,
       purpose: visitingPurpose,
     };
     
@@ -86,6 +164,19 @@ function urlSafeBase64ToBase64(str) {
      );
     
       alert("Appointment created successfully!");
+      // ✅ Reset all form fields
+    setVisitorName("");
+    setVisitorPhone("");
+    setVisitorEmail("");
+    setVisitorOrganization("");
+    setVisitorDesignation("");
+    setVisitingDate("");
+    setVisitingTime("");
+    setVisitingTill("");
+    setVisitingPurpose("");
+    setMeetingFloor("");
+    setRoomType("self");
+
       console.log("API Response →");
     } catch (err) {
       console.error("API POST Error →", err);
@@ -184,166 +275,239 @@ function urlSafeBase64ToBase64(str) {
     
     <div className="flex justify-center">
       <div className="bg-white/70 backdrop-blur-lg shadow-lg p-8 rounded-xl w-full max-w-5xl">
-        <h2 className="text-lg font-bold text-red-600 mb-4">Employee Info</h2>
-        <form className="space-y-6" onSubmit={handleSubmit}>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block font-semibold mb-1">Employee Name</label>
-              <input
-                type="text"
-                value={empName}
-                onChange={(e) => setEmpName(e.target.value)}
-                className="w-full p-2 border rounded focus:outline-red-500"
-                required
-              />
-            </div>
-            <div>
-              <label className="block font-semibold mb-1">Designation</label>
-              <input
-                type="text"
-                value={empDesignation}
-                onChange={(e) => setEmpDesignation(e.target.value)}
-                className="w-full p-2 border rounded focus:outline-red-500"
-                required
-              />
-            </div>
-            <div>
-              <label className="block font-semibold mb-1">Organization</label>
-              <input
-                type="text"
-                value={empOrganization}
-                onChange={(e) => setEmpOrganization(e.target.value)}
-                className="w-full p-2 border rounded focus:outline-red-500"
-                required
-              />
-            </div>
-            <div>
-              <label className="block font-semibold mb-1">Employee Email</label>
-              <input
-                type="text"
-                value={empEmail}
-                onChange={(e) => setEmpEmail(e.target.value)}
-                className="w-full p-2 border rounded focus:outline-red-500"
-                required
-              />
-            </div>
-            <div>
-              <label className="block font-semibold mb-1">Employee ID</label>
-              <input
-                type="text"
-                value={empId}
-                onChange={(e) => setEmpId(e.target.value)}
-                className="w-full p-2 border rounded focus:outline-red-500"
-              />
-            </div>
-            <div>
-              <label className="block font-semibold mb-1">Department</label>
-              <input
-                type="text"
-                value={empDepartment}
-                onChange={(e) => setEmpDepartment(e.target.value)}
-                className="w-full p-2 border rounded focus:outline-red-500"
-              />
-            </div>
-          </div>
+        
+        <form className="space-y-5" onSubmit={handleSubmit}>
+  {/* ---------------- EMPLOYEE INFO ---------------- */}
+ 
+  <h2 className="text-lg font-bold text-red-600 mb-4">Visitor Info</h2>
 
-          <div className="my-6 border-t-2 border-red-300"></div>
+{/* Visitor Row 1 */}
+<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+  <div>
+   
+    <OutlinedInput
+      type="date"
+      label="Visiting Date"
+      value={visitingDate}
+      onChange={(e) => setVisitingDate(e.target.value)}
+      
+      required
+    />
+  </div>
 
-          <h2 className="text-lg font-bold text-red-600 mb-4">Visitor Info</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-              <label className="block font-semibold mb-1">Visiting Date</label>
-              <input
-                type="date"
-                value={visitingDate}
-                onChange={(e) => setVisitingDate(e.target.value)}
-                className="w-full p-2 border rounded focus:outline-red-500"
-                required
-              />
-            </div>
-            <div>
-              <label className="block font-semibold mb-1">Visiting Time</label>
-              <input
-                type="time"
-                value={visitingTime}
-                onChange={(e) => setVisitingTime(e.target.value)}
-                className="w-full p-2 border rounded focus:outline-red-500"
-                required
-              />
-            </div>
-            <div>
-              <label className="block font-semibold mb-1">Visitor Name</label>
-              <input
-                type="text"
-                value={visitorName}
-                onChange={(e) => setVisitorName(e.target.value)}
-                className="w-full p-2 border rounded focus:outline-red-500"
-                required
-              />
-            </div>
-            <div>
-              <label className="block font-semibold mb-1">Phone No.</label>
-              <input
-                type="tel"
-                value={visitorPhone}
-                onChange={(e) => setVisitorPhone(e.target.value)}
-                className="w-full p-2 border rounded focus:outline-red-500"
-                required
-              />
-            </div>
-            <div>
-              <label className="block font-semibold mb-1">Email</label>
-              <input
-                type="email"
-                value={visitorEmail}
-                onChange={(e) => setVisitorEmail(e.target.value)}
-                className="w-full p-2 border rounded focus:outline-red-500"
-                required
-              />
-            </div>
-            <div>
-              <label className="block font-semibold mb-1">Visitor Organization</label>
-              <input
-                type="text"
-                value={visitorOrganization}
-                onChange={(e) => setVisitorOrganization(e.target.value)}
-                className="w-full p-2 border rounded focus:outline-red-500"
-             
-              />
-            </div>
-            <div>
-              <label className="block font-semibold mb-1">Visitor Designation</label>
-              <input
-                type="text"
-                value={visitorDesignation}
-                onChange={(e) => setVisitorDesignation(e.target.value)}
-                className="w-full p-2 border rounded focus:outline-red-500"
-                
-              />
-            </div>
-           
-            <div className="col-span-2">
-              <label className="block font-semibold mb-1">Visiting Purpose</label>
-              <textarea
-                value={visitingPurpose}
-                onChange={(e) => setVisitingPurpose(e.target.value)}
-                placeholder="Enter purpose of visit"
-                className="w-full p-2 border rounded focus:outline-red-500"
-                rows={4}
-              ></textarea>
-            </div>
-          </div>
+  <div>
+  
+    <OutlinedInput
+      type="time"
+      label="Visiting Time"
+      value={visitingTime}
+      onChange={(e) => setVisitingTime(e.target.value)}
+     
+      required
+    />
+  </div>
 
+  <div>
+   
+    <OutlinedInput
+      type="time"
+      label="Visiting Till"
+      value={visitingTill}
+      onChange={(e) => setVisitingTill(e.target.value)}
+     
+      required
+    />
+  </div>
+</div>
 
-          <div className="flex justify-center mt-4">
-            <button
-              type="submit"
-              className="bg-red-600 hover:bg-red-700 text-white font-semibold px-6 py-2 rounded-lg transition"
-            >
-              Submit Appointment
-            </button>
-          </div>
-        </form>
+{/* Visitor Row 2 */}
+<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+  <div>
+   
+    <OutlinedInput
+    type="text"
+    label="Visitor Name"
+    value={visitorName}
+    onChange={(e) => setVisitorName(e.target.value)}
+    required
+/>
+  </div>
+
+  <div>
+   
+    <OutlinedInput
+      type="tel"
+      label= "Phone No."
+      value={visitorPhone}
+      onChange={(e) => setVisitorPhone(e.target.value)}
+      
+      required
+    />
+  </div>
+
+  <div>
+   
+    <OutlinedInput
+      type="text"
+      label="Visitor Organization"
+      value={visitorOrganization}
+      onChange={(e) => setVisitorOrganization(e.target.value)}
+      
+    />
+  </div>
+</div>
+
+{/* Visitor Row 3 */}
+<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+  <div>
+  
+    <OutlinedInput
+      type="email"
+      label="Email"
+      value={visitorEmail}
+      onChange={(e) => setVisitorEmail(e.target.value)}
+     
+      required
+    />
+  </div>
+
+  <div>
+    
+    <OutlinedInput
+      type="text"
+      label="Visitor Designation"
+      value={visitorDesignation}
+      onChange={(e) => setVisitorDesignation(e.target.value)}
+      
+    />
+  </div>
+</div>
+
+{/* Meeting Floor & Room */}
+<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+  <div>
+    
+    <OutlinedInput
+label="Meeting Floor"
+value={meetingFloor}
+onChange={(e) => setMeetingFloor(e.target.value)}
+as="select"
+options={["1", "4", "8", "9", "10", "11", "12"]}
+/>
+  </div>
+
+  <div>
+   
+    <OutlinedInput
+    label="Meeting Room"
+      value={roomType}
+      onChange={(e) => setRoomType(e.target.value)}
+       as="select"
+      options={["Self", "Conference"]}
+      />
+  </div>
+</div>
+
+{/* Purpose */}
+<div>
+  
+  <OutlinedInput label="Purpose" value={visitingPurpose} onChange={(e) => setVisitingPurpose(e.target.value)} as="textarea" />
+</div>
+
+  
+
+  {/* ---------------- VISITOR INFO ----------------
+  <div className="my-6 border-t-2 border-red-300"></div>
+   */}
+
+   {/* 
+   <h2 className="text-lg font-bold text-red-600 mb-4">Employee Info</h2>
+
+ 
+  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div>
+     
+      <OutlinedInput
+        type="text"
+        label="Employee Name"
+        value={empName}
+        readOnly
+        
+      />
+    </div>
+
+    <div>
+     
+      <OutlinedInput
+        type="text"
+        label="Employee ID"
+        value={empId}
+        readOnly
+       
+      />
+    </div>
+
+    <div>
+     
+      <OutlinedInput
+        type="text"
+        label="Designation"
+        value={empDesignation}
+        readOnly
+      
+      />
+    </div>
+  </div>
+
+ 
+  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div>
+     
+      <OutlinedInput
+        type="text"
+        label="Employee Email"
+        value={empEmail}
+        readOnly
+        hidden
+      />
+    </div>
+
+    <div>
+     
+      <OutlinedInput
+        type="text"
+      
+        label="Department"
+        value={empDepartment}
+        readOnly
+       
+      />
+    </div>
+
+    <div>
+     
+      <OutlinedInput
+        type="text"
+        label="Organization"
+        value={empOrganization}
+        readOnly
+       
+      />
+    </div>
+  </div> 
+  */}
+ 
+ 
+  <div className="flex justify-center mt-4">
+    <button
+      type="submit"
+      className="bg-red-600 hover:bg-red-700 text-white font-semibold px-6 py-2 rounded-lg transition"
+    >
+      Submit Appointment
+    </button>
+  </div>
+</form>
+
       </div>
     </div>
   );
