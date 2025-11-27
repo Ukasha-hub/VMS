@@ -118,6 +118,7 @@ useEffect(() => {
     { name: "Visitor History", path: "history", icon: history },
     { name: "Scan Visitor Info", path: "scanqrcode", icon: scan },
     { name: "Checked In Visitors", path: "checkedin", icon: verify },
+   // { name: "HistoryVersionTwo", path: "historytwo", icon: verify },
   ];
 
   // Filter menus based on user type
@@ -139,6 +140,7 @@ useEffect(() => {
     "/dashboard/history": "Visitor History",
     "/dashboard/scanqrcode": "Scan Visitor Info",
     "/dashboard/checkedin": "Checked In Visitors",
+    "/dashboard/historytwo": "HistoryVersionTwo",
   };
 
   const pageTitle = routeTitleMap[location.pathname] || "Dashboard";
@@ -226,14 +228,7 @@ useEffect(() => {
 
           {/* Right section */}
           <div className="flex items-center gap-4 md:gap-6">
-            <button className="relative bg-yellow-200 p-2 rounded-full hover:bg-gray-200">
-              <FaBell className="h-5 w-5 text-red-600" />
-              {notifications > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-semibold rounded-full px-1.5 py-0.5">
-                  {notifications}
-                </span>
-              )}
-            </button>
+           
 
             <div className="flex items-center gap-2 md:gap-3">
             <div className="flex items-center gap-4 md:gap-6 relative" ref={dropdownRef}>

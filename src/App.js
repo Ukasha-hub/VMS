@@ -11,6 +11,7 @@ import VerifyVisitor from './pages/Outlet/VerifyVisitor';
 import HistoryVisit from './pages/Outlet/HistoryVisit';
 import { UserProvider } from './context/UserContext';
 import CheckedInVisitors from './pages/Outlet/CheckedInVisitors';
+import HistoryVisitVersionTwo from './pages/Outlet/HistoryVisitVersionTwo';
 
 function App() {
   // Check empID in URL query
@@ -59,6 +60,7 @@ function App() {
           <Route path="history" element={empIDFound ? <ProtectedRoute><HistoryVisit /></ProtectedRoute> : <HistoryVisit />} />
           <Route path="verify" element={empIDFound ? <ProtectedRoute><VerifyVisitor /></ProtectedRoute> : <VerifyVisitor />} />
           <Route path="checkedin" element={empIDFound ?<ProtectedRoute><CheckedInVisitors /></ProtectedRoute>:<CheckedInVisitors />} />
+          <Route path="historytwo" element={<HistoryVisitVersionTwo></HistoryVisitVersionTwo>} />
         </Route>
       </Routes>
     </Router>

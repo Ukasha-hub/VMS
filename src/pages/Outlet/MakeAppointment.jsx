@@ -85,13 +85,14 @@ const MakeAppointment = () => {
  const [meetingFloor, setMeetingFloor] = useState("")
  const [visitingTill, setVisitingTill] = useState("")
 
- const [roomType, setRoomType] = useState("self")
+ const [roomType, setRoomType] = useState("")
 
   
 
   const [user, setUser] = useState(null);
   const location = useLocation();
   const [isLoading, setIsLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
 
   const storedUser = JSON.parse(localStorage.getItem("loggedInUser"));
 const createdBy = storedUser?.emp_name || storedUser?.guard_name || "Unknown";
@@ -109,62 +110,72 @@ function urlSafeBase64ToBase64(str) {
   return str;
 }
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-     // --- TIME VALIDATION ---
-  if (visitingTime && visitingTill) {
-    const start = visitingTime;
-    const end = visitingTill;
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setSubmitting(true);
 
-    if (end <= start) {
+  // --- TIME VALIDATION ---
+  if (visitingTime && visitingTill) {
+    if (visitingTill <= visitingTime) {
       alert("Visiting Till time must be later than Visiting Time.");
-      return; // ❌ STOP submit
+      setSubmitting(false);
+      return;
     }
   }
-    const payload = {
-      emp_name: empName,
-      emp_organization: empOrganization,
-      emp_designation: empDesignation,
-      emp_id: empId,
-      emp_email:empEmail,
-      emp_department: empDepartment,
-      visitor_name: visitorName,
-      visitor_phone: visitorPhone,
-      visitor_email: visitorEmail,
-      visitor_organization: visitorOrganization,
-      visitor_designation: visitorDesignation,
-      appointment_date: visitingDate,
-      appointment_time: visitingTime,
-      status: "Pending", // optional default
-      qr_code_path: "string", // optional placeholder
-      created_by: createdBy, // optional
-     
-      meeting_floor: meetingFloor,
-      meeting_room: roomType,
-      valid_till: visitingTill,
-      purpose: visitingPurpose,
-    };
-    
-    try {
-      const token = localStorage.getItem("access_token"); // get token from login
-      
-      axios.post(
-        `${process.env.REACT_APP_API_URL}/api/v1/appointments/appointments/`,
-        payload,
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            'erp-payload': JSON.stringify({
-              employee_id: empId,
-              name: empName,
-              department: empDepartment
-            })
-          }
-        }
-     );
-    
-      alert("Appointment created successfully!");
-      // ✅ Reset all form fields
+
+  // --- BLOCK PAST TIME BOOKING FOR TODAY ---
+  const today = new Date().toISOString().split("T")[0];
+  if (visitingDate === today) {
+    const now = new Date();
+    const currentTime = now.toTimeString().slice(0, 5);
+    if (visitingTime <= currentTime || visitingTill <= currentTime) {
+      alert("You cannot book an appointment for a past time today.");
+      setSubmitting(false);
+      return;
+    }
+  }
+
+  const payload = {
+    emp_name: empName,
+    emp_organization: empOrganization,
+    emp_designation: empDesignation,
+    emp_id: empId,
+    emp_email: empEmail,
+    emp_department: empDepartment,
+    visitor_name: visitorName,
+    visitor_phone: visitorPhone,
+    visitor_email: visitorEmail,
+    visitor_organization: visitorOrganization,
+    visitor_designation: visitorDesignation,
+    appointment_date: visitingDate,
+    appointment_time: visitingTime,
+    status: "Pending",
+    qr_code_path: "string",
+    created_by: createdBy,
+    meeting_floor: meetingFloor,
+    meeting_room: roomType,
+    valid_till: visitingTill,
+    purpose: visitingPurpose,
+  };
+
+  try {
+    const response = await axios.post(
+      `${process.env.REACT_APP_API_URL}/api/v1/appointments/appointments/`,
+      payload,
+      {
+        headers: {
+          "Content-Type": "application/json",
+          "erp-payload": JSON.stringify({
+            employee_id: empId,
+            name: empName,
+            department: empDepartment,
+          }),
+        },
+      }
+    );
+
+    alert("✅ Appointment created successfully!");
+    // Reset form
     setVisitorName("");
     setVisitorPhone("");
     setVisitorEmail("");
@@ -177,12 +188,17 @@ function urlSafeBase64ToBase64(str) {
     setMeetingFloor("");
     setRoomType("self");
 
-      console.log("API Response →");
-    } catch (err) {
-      console.error("API POST Error →", err);
-      alert("Failed to create appointment");
-    }
-  };
+    console.log("API Response →", response.data);
+  } catch (err) {
+    console.error("API POST Error →", err);
+    // Show backend error detail if available
+    const errorDetail = err.response?.data?.detail || "Failed to create appointment";
+    alert(`❌ ${errorDetail}`);
+  } finally {
+    setSubmitting(false);
+  }
+};
+
 
   function urlSafeBase64ToBase64(str) {
     str = str.replace(/-/g, "+").replace(/_/g, "/");
@@ -393,6 +409,7 @@ value={meetingFloor}
 onChange={(e) => setMeetingFloor(e.target.value)}
 as="select"
 options={["1", "4", "8", "9", "10", "11", "12"]}
+required
 />
   </div>
 
@@ -404,6 +421,7 @@ options={["1", "4", "8", "9", "10", "11", "12"]}
       onChange={(e) => setRoomType(e.target.value)}
        as="select"
       options={["Self", "Conference"]}
+      required
       />
   </div>
 </div>
@@ -499,12 +517,15 @@ options={["1", "4", "8", "9", "10", "11", "12"]}
  
  
   <div className="flex justify-center mt-4">
-    <button
-      type="submit"
-      className="bg-red-600 hover:bg-red-700 text-white font-semibold px-6 py-2 rounded-lg transition"
-    >
-      Submit Appointment
-    </button>
+  <button
+  type="submit"
+  disabled={submitting}
+  className={`bg-red-600 hover:bg-red-700 text-white font-semibold px-6 py-2 rounded-lg transition ${
+    submitting && "opacity-50 cursor-not-allowed"
+  }`}
+>
+  {submitting ? "Submitting…" : "Submit Appointment"}
+</button>
   </div>
 </form>
 

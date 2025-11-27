@@ -6,7 +6,7 @@ import NormalView from "../../components/NormalView";
 import CalendarView from "../../components/CalendarView";
 
 const Home = () => {
-  const [activeTab, setActiveTab] = useState("calendar");
+  const [activeTab, setActiveTab] = useState("normal");
   const [todayCount, setTodayCount] = useState(0);
   const [monthCount, setMonthCount] = useState(0);
 

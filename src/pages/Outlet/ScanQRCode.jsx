@@ -8,6 +8,10 @@ const VerifyQR = () => {
   const [loading, setLoading] = useState(false);
   const [timeStatus, setTimeStatus] = useState(""); // new state for time validation
 
+  const [isSameDate, setIsSameDate] = useState(true);
+
+  
+
   const handleScan = async (e) => {
     if (e.key === "Enter") {
       const scannedText = e.target.value.trim();
@@ -23,6 +27,16 @@ const VerifyQR = () => {
 
           const data = res.data;
           setAppointment(data);
+          // ---- Date Comparison ----
+const today = new Date().toISOString().split("T")[0];  // YYYY-MM-DD
+const appointmentDay = data.appointment_date;
+
+if (today !== appointmentDay) {
+  setIsSameDate(false);
+  setTimeStatus("❌ This QR is not valid for today.");
+} else {
+  setIsSameDate(true);
+}
           setShowModal(true);
 
           // --- Time Validation ---
@@ -146,15 +160,15 @@ if (now < appointmentDate) {
             </div>
 
             <div className="flex justify-center mt-5">
-              <button
-                className={`px-5 py-2 rounded text-white text-lg ${
-                  loading ? "bg-gray-400" : "bg-red-600 hover:bg-red-700"
-                }`}
-                onClick={handleConfirmEntry}
-                disabled={loading || timeStatus.includes("Too early") || timeStatus.includes("Late")}
-              >
-                {loading ? "Checking in..." : "Confirm Entry"}
-              </button>
+            <button
+  className={`px-5 py-2 rounded text-white text-lg ${
+    loading || !isSameDate ? "bg-gray-400" : "bg-red-600 hover:bg-red-700"
+  }`}
+  onClick={handleConfirmEntry}
+  disabled={loading || !isSameDate}
+>
+  {loading ? "Checking in..." : "Confirm Entry"}
+</button>
             </div>
           </div>
         </div>
